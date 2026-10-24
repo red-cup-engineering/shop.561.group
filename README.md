@@ -67,6 +67,72 @@ The original Red Cup digital-goods storefront supplier [source commit ba156ab](h
 
 **Receiving stage:** the supplier source and unit/integration tests are committed, and [Causeway's original consumer test](https://github.com/causeway-services/shop.561.group/commit/e0b5044f3585000997b5f9d867d696c0d9f315ec) now exercises its advertised shop product. The exact supplier version has not been independently published/selected in an installed Cloudflare Worker; these lines **do not assert** a deployed MCP endpoint or accepted external customer. The existing source-only `workspace:*` dependency must be resolved by original Code/Operations release machinery, with native test/Worker execution and real buyer HTTP readback before making a production availability claim.
 
+## Private Stripe Checkout observation, not revenue recognition (October 23, 2026)
+
+The existing `/support` campaign has four **outside-catalog** live emsenn Payment
+Links. The original `scripts/export-support-campaign.mjs` produces the fixed
+channel share/attribution pack; **new read-only** `npm run
+marketing:reconcile -- <private-observation.json>` consumes a captured Stripe
+`GET /v1/checkout/sessions` response without any API key. The private input
+wrapper must contain exactly these fields:
+
+```json
+{
+  "stripeContext": "acct_18eDiqJ1vYnPQu2N",
+  "livemode": true,
+  "observedAt": "2026-10-23T18:30:00Z",
+  "checkoutSessions": {"object": "list", "data": [], "has_more": false}
+}
+```
+
+Use the exact real GET response under `checkoutSessions`; an empty array in
+this illustration is **not a provider observation**. Import only from the
+authenticated matching Stripe merchant and maintain its access separately.
+**Do not commit a real response:** it may contain customer personal information
+or transaction references. The local consumer projects counts by the four
+original source-pinned Payment Link IDs, rejects wrong-account/mixed-test data,
+duplicate session IDs, malformed paid amounts and bad pagination shapes, and
+never echoes customer fields. An unknown Payment Link is reported only as an
+unattributed observed row. An open unpaid Checkout is not qualified buyer demand,
+a completed paid Checkout is not accepted delivery, a recurring **first**
+Checkout is not a renewed subscription, and provider gross is not revenue
+cleared to the 561 Group.
+
+`inputCoverage` is explicitly either `additional-pages-unread` or
+`supplied-terminal-page-only`. Even a terminal page does not prove that the
+caller supplied an unfiltered, exhaustive account history; the script itself
+cannot authenticate the import. Fees, refunds, customer acceptance, actual
+subscription invoices, bank deposits and **Group** after-cost contribution
+remain `null` until independently source-received by the original provider,
+merchant and Finance operations. No attribution result authorizes outreach,
+Stripe mutation, book entitlement, deployment or a new contract. Native
+regressions live in `test/support-checkout-attribution.test.mjs`; this is a
+candidate **source** capability, not proof that `shop.561.group` is running
+it or that any new merchant payment occurred.
+
+For **four separately filtered Stripe Checkout list responses**, preserve the
+actual provider pagination and do not fabricate a combined all-account list.
+Pass `checkoutSessionsByLink` **instead of** `checkoutSessions` in the
+same dated merchant observation wrapper. It is an array of four records,
+each `{paymentLinkId, checkoutSessions}`, with the exact source-pinned
+Payment Link ID and that ID's original
+`GET /v1/checkout/sessions?payment_link=<id>` response. Every original
+source link must occur exactly once, and each returned session must carry
+the exact link queried. Wrong/missing links, mixed input modes, duplicate
+sessions, malformed list envelopes, and invalid paid amounts refuse.
+`inputQueryMode` distinguishes the input shape;
+`source-selected-terminal-link-pages` means all **four supplied filtered
+lists** said `has_more=false`, **not** that the caller proved exhaustive
+account history. `source-selected-link-pages-unread` explicitly identifies
+a still-paginated response. This privacy-minimal offline parser cannot
+authenticate a caller's query URL or reclassify Stripe gross as delivered
+customer value, personal bank clearance, or Group revenue.
+
+Original commercial Work and acceptance remain
+[Causeway Public Services #17](https://github.com/causeway-services/public-services-section/issues/17).
+The live-data confirmation and Source→Install→Buyer→Finance separation are
+independent receiving jobs.
+
 ## Qualifying the sovereign Storefront-as-a-Service and Shop (October 18, 2026)
 
 **Product contract rather than a new marketplace implementation.** This hostname is **one shop** operated by 561 Group, not all shops or the operator of other enterprises' goods. The incumbent book catalog, Stripe Checkout, gifts, entitlement and edition/reader semantics stay operationally distinct. Its future human-and-agent offerings include rights-cleared digital goods, physical goods, subscriptions/memberships, tipped/pay-what-you-want goods, microservices, commissioned work and qualified bundled artifacts. A Shop can include multiple independent suppliers only under their own accepted seller/merchant-of-record, payout, fulfillment, revision and rights agreement; discovering *other Shops* is Bazaar's job.

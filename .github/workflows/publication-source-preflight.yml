@@ -45,6 +45,20 @@ jobs:
           node --test test/support-campaign.test.mjs
           node scripts/export-support-campaign.mjs --json >/tmp/open-work-campaign.json
           node scripts/export-support-campaign.mjs --csv >/tmp/open-work-attribution.csv
+      - name: Verify source-qualified Stripe Checkout observation without payment authority
+        run: |
+          node --check src/support-checkout-attribution.mjs
+          node --check scripts/reconcile-support-checkouts.mjs
+          node --test test/support-checkout-attribution.test.mjs
+
+      - name: Test safe, source-qualified public buyer-route receiving
+        run: |
+          node --check src/support-public-probe.mjs
+          node --check scripts/probe-public-support.mjs
+          node --test test/support-public-probe.test.mjs
+      - name: Qualify Wrangler source policy for original support Worker routes
+        run: node --test test/support-worker-routing.test.mjs
+
       - name: Verify source-only accepted-books Atom discovery
         run: |
           node --check src/book-feed.mjs
@@ -54,9 +68,9 @@ jobs:
           node --check test/shop-commerce-integration.test.mjs
           node --test test/shop-commerce-integration.test.mjs
 
-      # This one PR is the release-receiving integration of existing source work.
+      # Every public Shop PR must qualify its full native Worker/checkout source.
       # No secrets, payments, deployments, new recurring tasks or billed runners.
-      # Standard ubuntu-24.04 runners in this public repository are free.
+      # This source-only workflow does not deploy or access merchant payment keys.
       - name: Receive original author-only links without changing editions
         run: |
           node --check scripts/reconcile-authored-offer-links.mjs
@@ -65,7 +79,7 @@ jobs:
           node --test test/reconcile-authored-offer-links.test.mjs test/compile-catalog.test.mjs
 
       - name: Qualify full pinned Shop Worker and non-deploying Wrangler bundle
-        if: github.event_name == 'pull_request' && github.head_ref == 'integration/commerce-shop-original-three-20261022'
+        if: github.event_name == 'pull_request'
         run: |
           node --version
           npx --yes pnpm@10.21.0 install --frozen-lockfile --ignore-scripts --reporter=append-only
@@ -80,3 +94,28 @@ jobs:
             mkdir -p public
           fi
           ./node_modules/.bin/wrangler deploy --dry-run --outdir /tmp/shop-561-receiving
+
+  # Unlike source qualification, this *separate* job receives actual public
+  # installed HTTP behavior. A 404 or stale/wrong merchant route must give a
+  # FAILED production/buyer-route check, not a green advisory step hidden in
+  # a successful source job. An unreachable network remains unobserved in
+  # the JSON receipt and does not establish which revision is installed.
+  # Never follows a Stripe redirect, creates a Checkout, uses merchant keys,
+  # deploys, or changes a customer or payment.
+  installed-buyer-route:
+    name: Installed Shop support buyer route (independent receiving)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Independently check public support HTTP routes (no payment)
+        run: node scripts/probe-public-support.mjs

@@ -13,7 +13,8 @@
     "arm-checkout": "node scripts/arm-checkout.mjs",
     "arm-gift-agent": "node scripts/arm-gift-agent.mjs",
     "marketing:open-work": "node scripts/export-support-campaign.mjs --markdown",
-    "marketing:attribution": "node scripts/export-support-campaign.mjs --csv"
+    "marketing:attribution": "node scripts/export-support-campaign.mjs --csv",
+    "marketing:reconcile": "node scripts/reconcile-support-checkouts.mjs"
   },
   "engines": {
     "node": ">=22.18"
