@@ -68,7 +68,7 @@ jobs:
   # frozen package closure, invalid Worker or refusal test. No deployment.
   native-private-release-contract:
     name: Trusted main source + private Worker qualification (no deployment)
-    if: \${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
     needs: [contract]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -77,7 +77,7 @@ jobs:
     steps:
       - name: Require the existing scoped private-source reader
         env:
-          PARAMETERS_READ_TOKEN: \${{ secrets.PARAMETERS_READ_TOKEN }}
+          PARAMETERS_READ_TOKEN: ${{ secrets.PARAMETERS_READ_TOKEN }}
         run: |
           if test -z "$PARAMETERS_READ_TOKEN"; then
             echo '::error title=Private Shop source not received::A scoped read-only PARAMETERS_READ_TOKEN is required for the original private Causeway parameters Gitlink; no github.token fallback'
@@ -87,7 +87,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: true
-          token: \${{ secrets.PARAMETERS_READ_TOKEN }}
+          token: ${{ secrets.PARAMETERS_READ_TOKEN }}
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
