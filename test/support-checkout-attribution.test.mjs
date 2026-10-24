@@ -1,10 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import campaign from "../data/records/marketing/open-work-campaign.json" with {type:"json"};
-import shopCatalog from "../catalog.json" with {type:"json"};
+import {readFileSync} from "node:fs";
 import {reconcileSupportCheckouts} from "../src/support-checkout-attribution.mjs";
 
-const receivers=shopCatalog.externalStripePaymentLinkReceivers;
+// Pure classifier contract data: deliberately synthetic. The actual CLI MUST
+// import the original private Causeway parameter source, never this fixture.
+// Public CI checks refusals/semantics, not private merchant/source admission.
+const campaign={
+ merchantDisplayName:"synthetic-test-merchant",campaignId:"synthetic-test-campaign",
+ oneTime:{links:{
+  direct:{id:"plink_SyntheticDirect"},
+  github:{id:"plink_SyntheticGithub"},
+  fediverse:{id:"plink_SyntheticFediverse"}
+ }},
+ monthly:{id:"plink_SyntheticMonthly"}
+};
+const receivers=[
+ ...Object.values(campaign.oneTime.links).map(link=>link.id),
+ campaign.monthly.id
+].map(stripePaymentLinkId=>({
+ type:"ExternalStripePaymentLinkReceiver",schemaVersion:1,stripePaymentLinkId,
+ stripeMerchantAccountId:"acct_SyntheticTest",
+ merchantDisplayName:campaign.merchantDisplayName
+}));
 const accountId=receivers[0].stripeMerchantAccountId;
 const links=campaign.oneTime.links;
 const session=(id,paymentLink,status="open",paymentStatus="unpaid",amount=null)=>({
@@ -19,11 +37,11 @@ const snapshot=(data=[],hasMore=false)=>({
 });
 const reconcile=observation=>reconcileSupportCheckouts({campaign,receivers,observation});
 
-test("only the original four emsenn merchant Payment Links qualify as Shop support observations",()=>{
+test("only four source-qualified synthetic Payment Links qualify as Shop support observations",()=>{
  const observation=reconcile(snapshot([]));
  assert.equal(observation.type,"ShopStripeCheckoutAttributionObservation");
  assert.equal(observation.schemaVersion,1);
- assert.equal(observation.sourceMerchant,"emsenn");
+ assert.equal(observation.sourceMerchant,campaign.merchantDisplayName);
  assert.equal(observation.sourceStripeAccountId,accountId);
  assert.equal(observation.paymentLinks.length,4);
  assert.deepEqual(new Set(observation.paymentLinks.map(row=>row.paymentLinkId)),
@@ -182,4 +200,16 @@ test("filtered page mode refuses missing, duplicate, foreign, malformed and mixe
  for(const mutate of wrong)
   assert.throws(()=>reconcile(altered(mutate)),TypeError);
  assert.equal(reconcile(original).inputRowsObserved,1);
+});
+
+test("original private parameters, not deleted root files, are required by the offline CLI",()=>{
+ const code=readFileSync(new URL("../scripts/reconcile-support-checkouts.mjs",import.meta.url),"utf8");
+ const probe=readFileSync(new URL("../scripts/probe-public-support.mjs",import.meta.url),"utf8");
+ const pkg=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
+ assert.equal(pkg.imports["#parameters/*"],"./parameters/*");
+ assert.match(code,/from "#parameters\/catalog\.json"/);
+ assert.match(code,/from "\.\.\/src\/support-campaign\.mjs"/);
+ assert.match(probe,/from "\.\.\/src\/support-campaign\.mjs"/);
+ assert.doesNotMatch(code,/from "\.\.\/(?:catalog\.json|data\/records\/marketing\/)/);
+ assert.doesNotMatch(probe,/from "\.\.\/data\/records\/marketing\//);
 });

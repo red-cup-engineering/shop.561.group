@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Live, public, read-only Shop support-route probe. No secret or payment API. */
-import campaign from "../data/records/marketing/open-work-campaign.json" with {type:"json"};
+import {campaign} from "../src/support-campaign.mjs";
 import {probePublicSupport} from "../src/support-public-probe.mjs";
 
 if(process.argv.length>2){

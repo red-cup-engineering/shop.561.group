@@ -5,8 +5,8 @@
  * email, posting, charging or account mutation; no bank settlement claim.
  */
 import {readFileSync} from "node:fs";
-import campaign from "../data/records/marketing/open-work-campaign.json" with {type:"json"};
-import shopCatalog from "../catalog.json" with {type:"json"};
+import {campaign} from "../src/support-campaign.mjs";
+import shopCatalog from "#parameters/catalog.json" with {type:"json"};
 import {reconcileSupportCheckouts} from "../src/support-checkout-attribution.mjs";
 
 const argument=process.argv[2];
