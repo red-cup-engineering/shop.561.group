@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { auditPublicationSources } from "../scripts/audit-publication-source.mjs";
@@ -89,4 +89,34 @@ test("a missing source under a proven but unmounted Gitlink is explicitly unveri
   const initialized=auditPublicationSources({catalogPath,servicesRoot:root,gitlinks:[{source,commit:pinned}]});
   assert.equal(initialized.valid,false);
   assert.equal(initialized.unverified.length,0);
+});
+
+test("trusted main Shop release gate cannot be selected by a pull request or literal expression", () => {
+  // GitHub's first real run exposed an inert, backslash-prefixed Actions
+  // expression, which mistakenly started the private job on a PR. The
+  // provider refused its literal token, but the SOURCE must reject this.
+  const workflow = readFileSync(new URL("../.github/workflows/publication-source-preflight.yml", import.meta.url), "utf8");
+  const action = value => "$" + "{{ " + value + " }}";
+  assert.equal(workflow.includes(String.fromCharCode(92) + "$" + "{{"), false,
+    "Actions syntax cannot be made literal by a backslash");
+  assert.equal(workflow.includes("pull_request_target:"), false,
+    "private source cannot be read through privileged pull-request callback");
+  const [publicSource, trustedMain, ...extras] = workflow.split("\n  native-private-release-contract:\n");
+  assert.deepEqual(extras, []);
+  assert.ok(publicSource && trustedMain, "source and private jobs remain distinct");
+  assert.ok(publicSource.includes("submodules: false"));
+  assert.equal(publicSource.includes("secrets.PARAMETERS_READ_TOKEN"), false);
+  assert.ok(trustedMain.includes("if: " + action(
+    "github.event_name != 'pull_request' && github.ref == 'refs/heads/main'")),
+    "private job requires an evaluated main-only expression");
+  assert.ok(trustedMain.includes("needs: [contract]"));
+  assert.ok(trustedMain.includes("submodules: true"));
+  assert.ok(trustedMain.includes("PARAMETERS_READ_TOKEN: " + action("secrets.PARAMETERS_READ_TOKEN")));
+  assert.ok(trustedMain.includes("token: " + action("secrets.PARAMETERS_READ_TOKEN")));
+  assert.equal(trustedMain.includes("github.token"), false,
+    "a public GitHub token is not an alternate grant to private parameters");
+  assert.ok(trustedMain.includes("--frozen-lockfile"));
+  assert.ok(trustedMain.includes("npm test"));
+  assert.ok(trustedMain.includes("wrangler deploy --dry-run"), "the job cannot deploy");
+  assert.ok(trustedMain.includes("test -f parameters/data/catalog.json"));
 });
