@@ -95,13 +95,24 @@ jobs:
       - name: Receive original private catalog and immutable source selection
         shell: bash
         run: |
-          if ! test -f parameters/data/catalog.json; then
-            echo '::error title=Shop source selection failed::Original private Causeway catalog not present at its declared Gitlink'
+          # The private parameters Gitlink has root catalog.json. This is the
+          # exact path consumed by the original Shop catalog compiler; data/
+          # contains seller-authored records, not a second canonical catalog.
+          if ! test -f parameters/catalog.json; then
+            echo '::error title=Shop source selection failed::Original private Causeway catalog not present at its declared Gitlink root'
             exit 1
           fi
-          git -C parameters rev-parse HEAD > "$RUNNER_TEMP/shop-parameters-commit"
+          # A readable checkout is not enough. Accept only the exact source
+          # commit selected by this Shop release's committed Gitlink.
+          selected="$(git rev-parse HEAD:parameters)"
+          received="$(git -C parameters rev-parse HEAD)"
+          if ! test "$received" = "$selected"; then
+            echo '::error title=Shop source revision mismatch::Private catalog checkout differs from the source-selected Gitlink'
+            exit 1
+          fi
+          printf '%s\n' "$received" > "$RUNNER_TEMP/shop-parameters-commit"
           test -s "$RUNNER_TEMP/shop-parameters-commit"
-          echo 'Original private catalog source is present; contents and credentials withheld'
+          echo 'Original private catalog and exact source-selected revision received; contents and credentials withheld'
       - name: Qualify exact Node24 frozen Shop dependency closure and source scenarios
         run: |
           npx --yes pnpm@10.21.0 install --frozen-lockfile --ignore-scripts --reporter=append-only
