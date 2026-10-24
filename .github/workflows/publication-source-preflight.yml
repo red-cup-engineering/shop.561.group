@@ -61,3 +61,59 @@ jobs:
         run: |
           echo '::notice title=Source-only preflight::Private Causeway parameters, pinned Worker, Cloudflare installation, live buyer routes, paid orders and accepted delivery were not qualified by this public run'
           echo 'PUBLIC SOURCE CONTRACT ONLY. Private parameter/source integration, full dependency-closed Worker build, accepted covers and actual installed buyer-route receiving require source-authorized independent Coesite qualification. Passing this workflow does not authorize merge or deployment.' >> "$GITHUB_STEP_SUMMARY"
+
+# The original private catalog is consumed only on trusted, accepted
+  # main source, NEVER from pull_request / untrusted candidate code. Unlike
+  # the source-only job, this receiver MUST FAIL on missing source, token,
+  # frozen package closure, invalid Worker or refusal test. No deployment.
+  native-private-release-contract:
+    name: Trusted main source + private Worker qualification (no deployment)
+    if: \${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    needs: [contract]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Require the existing scoped private-source reader
+        env:
+          PARAMETERS_READ_TOKEN: \${{ secrets.PARAMETERS_READ_TOKEN }}
+        run: |
+          if test -z "$PARAMETERS_READ_TOKEN"; then
+            echo '::error title=Private Shop source not received::A scoped read-only PARAMETERS_READ_TOKEN is required for the original private Causeway parameters Gitlink; no github.token fallback'
+            exit 1
+          fi
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          submodules: true
+          token: \${{ secrets.PARAMETERS_READ_TOKEN }}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Receive original private catalog and immutable source selection
+        shell: bash
+        run: |
+          if ! test -f parameters/data/catalog.json; then
+            echo '::error title=Shop source selection failed::Original private Causeway catalog not present at its declared Gitlink'
+            exit 1
+          fi
+          git -C parameters rev-parse HEAD > "$RUNNER_TEMP/shop-parameters-commit"
+          test -s "$RUNNER_TEMP/shop-parameters-commit"
+          echo 'Original private catalog source is present; contents and credentials withheld'
+      - name: Qualify exact Node24 frozen Shop dependency closure and source scenarios
+        run: |
+          npx --yes pnpm@10.21.0 install --frozen-lockfile --ignore-scripts --reporter=append-only
+          npm run check
+          npm test
+      - name: Qualify genuine Worker bundle without publishing or accepting missing covers
+        run: |
+          # Source checkout lacks the ten publisher-owned cover artifacts:
+          # this is strictly a Worker bundling test, never a ready release.
+          if ! test -d public; then
+            mkdir -p public
+            echo 'Accepted book covers are NOT in this checkout; Worker bundle only'
+          fi
+          ./node_modules/.bin/wrangler deploy --dry-run --outdir "$RUNNER_TEMP/shop-worker-bundle"
+          echo 'SOURCE + DEPENDENCY + DRY BUNDLE ONLY; NOT installed buyer/checkout acceptance' >> "$GITHUB_STEP_SUMMARY"
