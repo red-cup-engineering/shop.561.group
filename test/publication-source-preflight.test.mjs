@@ -119,5 +119,16 @@ test("trusted main Shop release gate cannot be selected by a pull request or lit
   assert.ok(trustedMain.includes("--frozen-lockfile"));
   assert.ok(trustedMain.includes("npm test"));
   assert.ok(trustedMain.includes("wrangler deploy --dry-run"), "the job cannot deploy");
-  assert.ok(trustedMain.includes("test -f parameters/data/catalog.json"));
+  // The trusted release gate must point to the *same* original seller catalog
+  // that compile-catalog consumes. The pinned private Gitlink stores its
+  // catalog at its root, not beneath data/. A wrong path makes all trusted
+  // release checks fail regardless of CI credential or genuine seller rights.
+  const compiler = readFileSync(new URL("../scripts/compile-catalog.mjs", import.meta.url), "utf8");
+  assert.ok(compiler.includes('join(site, "parameters", "catalog.json")'));
+  assert.ok(trustedMain.includes("test -f parameters/catalog.json"));
+  assert.equal(trustedMain.includes("test -f parameters/data/catalog.json"), false);
+  // Require the exact committed Gitlink, not whichever branch HEAD the
+  // private checkout happened to select at execution time.
+  assert.ok(trustedMain.includes("git rev-parse HEAD:parameters"));
+  assert.ok(trustedMain.includes('test "$received" = "$selected"'));
 });
