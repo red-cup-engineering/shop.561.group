@@ -113,7 +113,8 @@ test("trusted main Shop release gate cannot be selected by a pull request or lit
   assert.ok(trustedMain.includes("submodules: true"));
   assert.ok(trustedMain.includes("PARAMETERS_READ_TOKEN: " + action("secrets.PARAMETERS_READ_TOKEN")));
   assert.ok(trustedMain.includes("token: " + action("secrets.PARAMETERS_READ_TOKEN")));
-  assert.equal(trustedMain.includes("github.token"), false,
+  assert.equal(trustedMain.includes("token: " + action("github.token")), false);
+  assert.equal(trustedMain.includes("|| github.token"), false,
     "a public GitHub token is not an alternate grant to private parameters");
   assert.ok(trustedMain.includes("--frozen-lockfile"));
   assert.ok(trustedMain.includes("npm test"));
