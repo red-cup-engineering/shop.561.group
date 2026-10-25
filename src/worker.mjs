@@ -3,7 +3,7 @@ import * as storefrontRuntime from "@red-cup-engineering/digital-goods-storefron
 import { externalStripePaymentLinkIds } from "./external-stripe-payment-link-receiving.mjs";
 const {createDigitalGoodsStorefrontWorker}=storefrontRuntime;
 import catalog from "./compiled-catalog.mjs";
-import { createShopFulfillment, createShopStripeAudit } from "./fulfillment.mjs";
+import { createShopFulfillmentBindings } from "./fulfillment.mjs";
 import { marketCatalogTransport, serviceBrowseResponse } from "./service-discovery.mjs";
 import { supportResponse } from "./support-campaign.mjs";
 import { bookAtomFeed } from "./book-feed.mjs";
@@ -58,10 +58,9 @@ export default {
     }
     return runtime.fetch(request, {
       ...env,
-      fulfillment: createShopFulfillment(env.SHOP_FULFILLMENT),
+      ...createShopFulfillmentBindings(env.SHOP_FULFILLMENT),
       goods: env.SHOP_GOODS,
       tokenSecret: env.SHOP_TOKEN_SECRET,
-      audit: createShopStripeAudit(env.SHOP_FULFILLMENT),
       // Source-qualified emsenn merchant event observations are distinct from
       // this Shop's book checkout and entitlement custody. Older installed
       // suppliers must NOT receive an unimplemented capability assertion.
