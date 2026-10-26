@@ -218,7 +218,7 @@ test("Shop routes original market services without mutating book checkout", asyn
   let reads = 0;
   const testEnv = env({ MARKET_SERVICE_CATALOG_FETCH: async (url, options) => {
     reads++;
-    assert.equal(url, "https://market.561.group/v1/catalog");
+    assert.equal(url, "https://market.561.group/v1/catalog?offset=0&limit=20");
     assert.equal(options.redirect, "manual");
     return Response.json(source);
   } });
@@ -234,7 +234,7 @@ test("Shop routes original market services without mutating book checkout", asyn
   assert.equal(reads, 2);
   const fromMarketBinding = env({ MARKET_SERVICE_CATALOG_FETCH: {
     async fetch(request) {
-      assert.equal(request.url, "https://market.561.group/v1/catalog");
+      assert.equal(request.url, "https://market.561.group/v1/catalog?offset=0&limit=20");
       assert.equal(request.method, "GET");
       assert.equal(request.credentials, "omit");
       return Response.json(source);
