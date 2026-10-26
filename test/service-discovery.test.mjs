@@ -28,7 +28,8 @@ function source() {
 }
 function served(doc = source()) {
   return async (url, options) => {
-    assert.equal(url, MARKET_CATALOG_URL);
+    assert.equal(new URL(url).origin + new URL(url).pathname, MARKET_CATALOG_URL);
+    assert.ok(new URL(url).searchParams.has("limit"));
     assert.equal(options.method, "GET");
     assert.equal(options.redirect, "manual");
     return new Response(JSON.stringify(doc), {
@@ -98,10 +99,10 @@ test("service cards HTML-escape seller descriptions and do not make a fake buy b
   const html = renderServiceBrowse(projectOriginalMarketServices(source()));
   assert.match(html, /&amp; &lt;script&gt;not markup&lt;\/script&gt;/u);
   assert.doesNotMatch(html, /<script>/u);
-  assert.match(html, /original 561 Group x402 merchant/u);
+  assert.match(html, /owning service section/u);
   assert.doesNotMatch(html, /<form[^>]*checkout/u);
   assert.match(html, /bazaar\.561\.group\/offers\?source=house-x402&amp;id=/u);
-  assert.match(html, /Inspect source-qualified offer in Bazaar/u);
+  assert.match(html, /View service details/u);
   assert.doesNotMatch(html, /market\.561\.group\/\?offer=/u);
 });
 
@@ -211,7 +212,7 @@ test("service browsing preserves page size and exposes accessible forward, back 
   assert.match(beyond, /No services at this page offset/u);
   assert.match(beyond, /<a rel="prev" href="\/services\?q=&amp;offset=1&amp;limit=1">Previous services<\/a>/u);
   const missing = renderServiceBrowse(projectOriginalMarketServices(source(), { query: "nothing" }));
-  assert.match(missing, /<p role="status">No matching source-listed services\.<\/p>/u);
+  assert.match(missing, /<p role="status">No matching services\.<\/p>/u);
   assert.doesNotMatch(missing, /Service results pages/u);
 });
 
@@ -228,7 +229,7 @@ test("HTTP service browser keeps exact page parameters and returns a useful no-m
     new Request("https://shop.561.group/services?q=no-such-offer"),
     { fetchSource: served() }
   );
-  assert.match(await empty.text(), /<p role="status">No matching source-listed services\.<\/p>/u);
+  assert.match(await empty.text(), /<p role="status">No matching services\.<\/p>/u);
 });
 
 test("original Market service binding sends one fixed read request, without purchase rights", async () => {
@@ -236,7 +237,8 @@ test("original Market service binding sends one fixed read request, without purc
   const transport = marketCatalogTransport({
     async fetch(request) {
       calls.push(request);
-      assert.equal(request.url, MARKET_CATALOG_URL);
+      assert.equal(new URL(request.url).origin + new URL(request.url).pathname, MARKET_CATALOG_URL);
+      assert.equal(new URL(request.url).searchParams.get("query"), "alpha");
       assert.equal(request.method, "GET");
       assert.equal(request.redirect, "manual");
       assert.equal(request.credentials, "omit");
@@ -263,4 +265,79 @@ test("the original Shop Wrangler declaration selects the actual Market Worker", 
   const { readFile } = await import("node:fs/promises");
   const manifest = await readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8");
   assert.match(manifest, /"binding": "MARKET_SERVICE_CATALOG_FETCH", "service": "market-561-group"/u);
+});
+
+test("large catalogs are browsed through one bounded original Market page", async () => {
+  let calls = 0;
+  const page = { ...source(), offers: source().offers.slice(0, 2),
+    total: 10000, offset: 9800, limit: 2, nextOffset: 9802 };
+  const response = await serviceBrowseResponse(
+    new Request("https://shop.561.group/services.json?q=api&offset=9800&limit=2"),
+    { fetchSource: async (address, options) => {
+      calls += 1;
+      const url = new URL(address);
+      assert.equal(url.origin + url.pathname, MARKET_CATALOG_URL);
+      assert.equal(url.searchParams.get("query"), "api");
+      assert.equal(url.searchParams.get("offset"), "9800");
+      assert.equal(url.searchParams.get("limit"), "2");
+      assert.equal(options.credentials, "omit");
+      assert.ok(options.signal instanceof AbortSignal);
+      return Response.json(page);
+    } }
+  );
+  assert.equal(response.status, 200);
+  const projected = await response.json();
+  assert.equal(projected.total, 10000);
+  assert.equal(projected.nextOffset, 9802);
+  assert.deepEqual(projected.services.map(row => row.sku), [a, b]);
+  assert.equal(calls, 1);
+});
+
+test("section forms and navigation preserve the same source selection", async () => {
+  const section = "lib/emsenn/services/561-group/services/data-services-section";
+  const offer = { ...row(a, "Section service"), section };
+  const page = { ...source(), offers: [offer], total: 4, offset: 1, limit: 1, nextOffset: 2 };
+  const params = new URLSearchParams({ q: "analysis", section, cover: section, offset: "1", limit: "1" });
+  const response = await serviceBrowseResponse(new Request(`https://shop.561.group/services?${params}`), {
+    fetchSource: async address => {
+      const url = new URL(address);
+      assert.equal(url.searchParams.get("section"), section);
+      assert.equal(url.searchParams.get("cover"), section);
+      return Response.json(page);
+    },
+  });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /2–2 of 4 matching services/u);
+  assert.match(html, /name="section"/u);
+  assert.match(html, /name="cover"/u);
+  assert.match(html, /More from data/u);
+  assert.match(html, /rel="next"[^>]+section=[^&]+&amp;cover=/u);
+  assert.doesNotMatch(html, /independently proven|unverified|No purchase or wallet authority/u);
+});
+
+test("mismatched or incomplete upstream pages cannot become customer results", async () => {
+  const good = { ...source(), offers: source().offers.slice(0, 2), total: 10000,
+    offset: 700, limit: 2, nextOffset: 702 };
+  for (const changed of [
+    { offset: 0 }, { limit: 20 }, { total: -1 }, { nextOffset: null },
+    { offers: [good.offers[0]] }, { offers: [good.offers[0], row(b, "Held", false)] },
+  ]) {
+    const response = await serviceBrowseResponse(
+      new Request("https://shop.561.group/services.json?offset=700&limit=2"),
+      { fetchSource: async () => Response.json({ ...good, ...changed }) }
+    );
+    assert.equal(response.status, 503);
+  }
+});
+
+test("invalid page and section requests remain client errors", async () => {
+  for (const query of ["offset=1e3", "offset=100001", "q=a&q=b", "unknown=yes"])
+    assert.equal((await serviceBrowseResponse(new Request(`https://shop.561.group/services?${query}`), {
+      fetchSource: async () => { throw Error("invalid selection contacted Market"); },
+    })).status, 400);
+  const response = await serviceBrowseResponse(new Request("https://shop.561.group/services?cover=bad"), {
+    fetchSource: async () => Response.json({ error: "Invalid source section cover" }, { status: 400 }),
+  });
+  assert.equal(response.status, 400);
 });
