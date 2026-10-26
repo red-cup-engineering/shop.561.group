@@ -20,8 +20,8 @@ const runtime = createDigitalGoodsStorefrontWorker({
   buyerActor: "urn:ame:shop-561-group-buyer",
   storefront: {
     title: "561 Group Books and Services",
-    description: "Books from the 561 Group, with accepted EPUB and PDF edition digests, plus read-only discovery of the original x402 seller’s services. Source listings are not proof of available payment or delivery.",
-    footerHtml: "561 Group. <a href=\"https://market.561.group\">Market</a> · <a href=\"https://bazaar.561.group\">Bazaar</a> · <a href=\"https://shop.561.group\">Shop</a> · <a href=\"/services\">Services</a> · <a href=\"/support\">Support open work</a> · <a href=\"/books.atom\">Book updates (Atom)</a>. Browse books and source-listed services, or inspect original terms in the Bazaar. Agents: <a href=\"/services.json\">Source-service catalog JSON (GET)</a>, <a href=\"/catalog.json\">Shop catalog JSON (GET)</a>, <a href=\"/mcp\">Shop MCP (POST)</a> for list_products, search_products and get_product, <a href=\"https://bazaar.561.group/discovery.json\">Bazaar discovery JSON (GET)</a>, <a href=\"https://market.561.group/markets/discovery.json\">Market discovery JSON (GET)</a>. Discovery documents identify the existing Bazaar and Market MCP POST endpoints. Live payment and delivery require the current seller’s confirmation.",
+    description: "Books, data, analysis and software services from the 561 Group. Find a service by task or owning service section.",
+    footerHtml: "561 Group. <a href=\"https://market.561.group\">Market</a> · <a href=\"https://bazaar.561.group\">Bazaar</a> · <a href=\"https://shop.561.group\">Shop</a> · <a href=\"/services\">Services</a> · <a href=\"/support\">Support open work</a> · <a href=\"/books.atom\">Book updates (Atom)</a>. Browse books and services, and explore service details in the Bazaar. Agents: <a href=\"/services.json\">Service catalog JSON (GET)</a>, <a href=\"/catalog.json\">Shop catalog JSON (GET)</a>, <a href=\"/mcp\">Shop MCP (POST)</a> for list_products, search_products and get_product, <a href=\"https://bazaar.561.group/discovery.json\">Bazaar discovery JSON (GET)</a>, <a href=\"https://market.561.group/markets/discovery.json\">Market discovery JSON (GET)</a>. Discovery documents identify the existing Bazaar and Market MCP POST endpoints.",
   },
 });
 
@@ -77,3 +77,4 @@ export default {
 };
 
 export { ShopFulfillment } from "./fulfillment.mjs";
+
