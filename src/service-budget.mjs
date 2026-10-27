@@ -35,7 +35,9 @@ export function admitOriginalMarketBasket(raw,requested) {
   if (!record(raw) || !Array.isArray(raw.lines) ||
       raw.lines.length!==requested.skus.length ||
       raw.paymentAuthorized!==false || raw.purchaseExecuted!==false ||
-      raw.deliveryReceived!==false || typeof raw.complete!=="boolean" ||
+      raw.deliveryReceived!==false ||
+      (raw.maximumTotalAtomic!==undefined && raw.maximumTotalAtomic!==requested.maximum) ||
+      typeof raw.complete!=="boolean" ||
       (raw.withinAdvertisedCeiling!==null && typeof raw.withinAdvertisedCeiling!=="boolean") ||
       (raw.pricedSubtotalAtomic!==null && !ATOMIC.test(raw.pricedSubtotalAtomic)) ||
       (raw.advertisedTotalAtomic!==null && !ATOMIC.test(raw.advertisedTotalAtomic)))
