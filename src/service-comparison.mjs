@@ -146,6 +146,10 @@ export function renderServiceComparisonHTML(reading) {
       '</code>: original example admitted; execution not authorized</li>').join("")+
     '</ul></section>' : "";
   const query=compareParameters(reading.requestedSkus);
+  const budgetRows=offers.map((offer,i)=>'<fieldset><legend>Source API '+(i+1)+'</legend>'+
+    '<input type="hidden" name="sku" value="'+h(offer.sku)+'">'+
+    '<label>Calls <input name="calls" type="number" min="1" max="100" required value="1"></label>'+
+    '<small>'+h(offer.name)+' — price preview '+h(offer.pricePreview??"Not supplied")+'</small></fieldset>').join("");
   const hidden=reading.requestedSkus.map(sku=>'<input type="hidden" name="sku" value="'+h(sku)+'">').join("");
   return '<!doctype html><html lang="en"><head><meta charset="utf-8">'+
     '<meta name="viewport" content="width=device-width,initial-scale=1">'+
@@ -160,6 +164,13 @@ export function renderServiceComparisonHTML(reading) {
     '<main><h1>Compare API services</h1><p>'+h(reading.interpretation)+'</p>'+
     compareTable+omissions+links+
     '<p><a href="/services/compare.json?'+h(query)+'">Machine-readable original comparison</a></p>'+
+    (offers.length?'<section><h2>Budget these original API calls</h2>'+
+      '<p>Enter a ceiling in the original seller asset base units, not dollars. This is not a quote or a purchase.</p>'+
+      '<form action="/services/basket" method="GET">'+budgetRows+
+      '<label for="budget-ceiling">Maximum atomic units</label>'+
+      '<input id="budget-ceiling" name="maxTotalAtomic" required maxlength="78" inputmode="numeric" pattern="(0|[1-9][0-9]*)">'+
+      '<button type="submit">Preview an original basket without a wallet</button></form></section>':'')+
+
     '<form action="/services/compare" method="GET">'+hidden+
     '<label for="more-sku">Add another original SKU</label>'+
     '<input id="more-sku" name="sku" maxlength="61" required placeholder="ni:///sha-256;...">'+
