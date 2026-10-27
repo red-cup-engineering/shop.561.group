@@ -94,6 +94,11 @@ test("one buyer follows four real Shop source routes without duplicate catalog o
   assert.match(planned,/4000/);
   assert.match(planned,/Original Market budget lines/);
   assert.match(planned,/Plan API calls without a wallet/);
+  for(const html of [directory,detail,comparison,planned]){
+    assert.match(html,/prefers-color-scheme:dark/);
+    assert.match(html,/focus-visible/);
+    assert.match(html,/forced-colors:active/);
+  }
   assert.deepEqual(requests.map(r=>r.pathname),[
     "/v1/catalog","/v1/catalog","/v1/market/compare","/v1/market/basket"
   ]);
