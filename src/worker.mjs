@@ -4,7 +4,7 @@ import { externalStripePaymentLinkIds } from "./external-stripe-payment-link-rec
 const {createDigitalGoodsStorefrontWorker}=storefrontRuntime;
 import catalog from "./compiled-catalog.mjs";
 import { createShopFulfillmentBindings } from "./fulfillment.mjs";
-import { marketCatalogTransport, serviceBrowseResponse } from "./service-discovery.mjs";
+import { marketCatalogTransport, serviceBrowseResponse, serviceOfferResponse } from "./service-discovery.mjs";
 import { supportResponse } from "./support-campaign.mjs";
 import { bookAtomFeed } from "./book-feed.mjs";
 
@@ -52,6 +52,9 @@ export default {
           "x-content-type-options": "nosniff",
         },
       });
+    }
+    if (pathname === "/services/offer" || pathname === "/services/offer.json") {
+      return serviceOfferResponse(request, { fetchSource: marketCatalogTransport(env.MARKET_SERVICE_CATALOG_FETCH, fetch) });
     }
     if (pathname === "/services" || pathname === "/services.json") {
       return serviceBrowseResponse(request, { fetchSource: marketCatalogTransport(env.MARKET_SERVICE_CATALOG_FETCH, fetch) });
