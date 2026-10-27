@@ -1,4 +1,5 @@
 import {MAX_ORIGINAL_MARKET_BYTES, readBoundedOriginalMarketJson} from "./original-market-reader.mjs";
+import {serviceCompareResponse} from "./service-comparison.mjs";
 // Read-only human and machine storefront projection of the ORIGINAL x402 seller.
 // Shop does not become another merchant, invent prices or accept agent payment here.
 export const MARKET_CATALOG_URL = "https://market.561.group/v1/catalog";
@@ -237,6 +238,13 @@ export function renderServiceOfferPage(reading) {
   ${properties.length ? `<div role="region" aria-label="Source-declared input fields" tabindex="0"><table><caption>Input fields (first ${properties.length})</caption><thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Required</th><th scope="col">Description</th></tr></thead><tbody>${fields}</tbody></table></div>` : "<p>The seller did not declare individually displayable input fields.</p>"}
   <details><summary>Structured request body schema</summary>${contract(schema)}</details></section>
   <section aria-labelledby="output"><h2 id="output">What the service returns</h2><details><summary>Structured output schema</summary>${contract(output)}</details></section>
+  <section aria-labelledby="compare"><h2 id="compare">Compare this offer with another</h2>
+  <form action="/services/compare" method="GET">
+    <input type="hidden" name="sku" value="${sku}">
+    <label for="compare-sku">Another original seller SKU</label>
+    <input id="compare-sku" name="sku" required maxlength="61" placeholder="ni:///sha-256;...">
+    <button type="submit">Compare original offers</button>
+  </form><p><small>Comparison is free, read-only, and does not invoke a paid resource.</small></p></section>
   <section aria-labelledby="agent"><h2 id="agent">For agents and technical buyers</h2>
   <p>Use the <a href="${h(machine)}">single-offer JSON readout</a> to inspect the exact source-reported method, URL, input and output contracts. Source records do not substitute for an actual 402 challenge, a signed payment authorization or a witnessed delivery.</p>
   <p><small>${h(sourceStatus)}</small></p></section></main>
@@ -347,6 +355,8 @@ export async function serviceBrowseResponse(request, { fetchSource = fetch } = {
  */
 export function routeServiceDiscovery(request, {fetchSource = fetch} = {}) {
   const path = new URL(request.url).pathname;
+  if (path === '/services/compare' || path === '/services/compare.json')
+    return serviceCompareResponse(request, {fetchSource});
   if (path === '/services/offer' || path === '/services/offer.json')
     return serviceOfferResponse(request, {fetchSource});
   if (path === '/services' || path === '/services.json')
