@@ -1,5 +1,6 @@
 import {MAX_ORIGINAL_MARKET_BYTES, readBoundedOriginalMarketJson} from "./original-market-reader.mjs";
 import {serviceCompareResponse} from "./service-comparison.mjs";
+import {serviceBudgetResponse} from "./service-budget.mjs";
 // Read-only human and machine storefront projection of the ORIGINAL x402 seller.
 // Shop does not become another merchant, invent prices or accept agent payment here.
 export const MARKET_CATALOG_URL = "https://market.561.group/v1/catalog";
@@ -245,6 +246,14 @@ export function renderServiceOfferPage(reading) {
     <input id="compare-sku" name="sku" required maxlength="61" placeholder="ni:///sha-256;...">
     <button type="submit">Compare original offers</button>
   </form><p><small>Comparison is free, read-only, and does not invoke a paid resource.</small></p></section>
+  <section aria-labelledby="budget"><h2 id="budget">Plan a source-priced API call budget</h2>
+    <form action="/services/basket" method="GET">
+      <input type="hidden" name="sku" value="${sku}">
+      <label for="budget-calls">Calls</label><input id="budget-calls" name="calls" type="number" min="1" max="100" value="1" required>
+      <label for="budget-maximum">Maximum in original seller asset atomic units</label>
+      <input id="budget-maximum" name="maxTotalAtomic" inputmode="numeric" maxlength="78" pattern="(0|[1-9][0-9]*)" required>
+      <button type="submit">Preview without payment</button>
+    </form><p><small>No USD exchange rate, wallet authority or authorization is assumed.</small></p></section>
   <section aria-labelledby="agent"><h2 id="agent">For agents and technical buyers</h2>
   <p>Use the <a href="${h(machine)}">single-offer JSON readout</a> to inspect the exact source-reported method, URL, input and output contracts. Source records do not substitute for an actual 402 challenge, a signed payment authorization or a witnessed delivery.</p>
   <p><small>${h(sourceStatus)}</small></p></section></main>
@@ -355,6 +364,8 @@ export async function serviceBrowseResponse(request, { fetchSource = fetch } = {
  */
 export function routeServiceDiscovery(request, {fetchSource = fetch} = {}) {
   const path = new URL(request.url).pathname;
+  if (path === '/services/basket' || path === '/services/basket.json')
+    return serviceBudgetResponse(request, {fetchSource});
   if (path === '/services/compare' || path === '/services/compare.json')
     return serviceCompareResponse(request, {fetchSource});
   if (path === '/services/offer' || path === '/services/offer.json')
