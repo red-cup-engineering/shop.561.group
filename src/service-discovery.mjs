@@ -147,7 +147,8 @@ export function renderServiceBrowse(projection) {
   const list = services.map(row => {
     const owner = row.seller?.enterprise ? ` Provider: ${escapeHtml(row.seller.enterprise)}.` : "";
     const sectionLink = row.section ? `<p><a href="/services?${escapeHtml(new URLSearchParams({ section: row.section }))}">More from ${escapeHtml(row.section.split("/").at(-1).replace(/-services-section$/u, "").replace(/-/gu, " "))}</a></p>` : "";
-    return `<li><article><h2><a href="${escapeHtml(row.inspectUrl)}">${escapeHtml(row.name)}</a></h2><p>${escapeHtml(row.description)}</p><p><strong>Price:</strong> ${escapeHtml(row.pricePreview ?? "See service terms")} · ${escapeHtml(row.method)} · ${escapeHtml(row.category)}.${owner}</p>${sectionLink}<p><a href="${escapeHtml(row.inspectUrl)}">View service details</a></p></article></li>`;
+    const shopDetail = `/services/offer?${new URLSearchParams({ sku: row.sku })}`;
+    return `<li><article><h2><a href="${escapeHtml(shopDetail)}">${escapeHtml(row.name)}</a></h2><p>${escapeHtml(row.description)}</p><p><strong>Catalog price:</strong> ${escapeHtml(row.pricePreview ?? "See current terms")} · ${escapeHtml(row.method)} · ${escapeHtml(row.category)}.${owner}</p>${sectionLink}<p><a href="${escapeHtml(shopDetail)}">Inspect input, output and buying options in the Shop</a> · <a href="${escapeHtml(row.inspectUrl)}">Original Bazaar listing</a></p></article></li>`;
   }).join("");
   const pageHref = target => `/services?${escapeHtml(parameters(target))}`;
   const lastStart = total > 0 ? Math.floor((total - 1) / limit) * limit : 0;
@@ -196,6 +197,121 @@ async function readBoundedSource(response) {
   return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
 }
 
+
+
+async function loadOriginalMarketPage(selection, fetchSource) {
+  const response = await fetchSource(marketServicePageUrl(selection), {
+    method: "GET", redirect: "manual", credentials: "omit",
+    signal: AbortSignal.timeout(10000), headers: { accept: "application/json" }
+  });
+  if (response.status === 400) {
+    await response.body?.cancel();
+    return null;
+  }
+  if (response.status !== 200 ||
+      !response.headers.get("content-type")?.includes("application/json") ||
+      Number(response.headers.get("content-length") ?? 0) > MAX_UPSTREAM_BYTES)
+    throw new TypeError("Original seller read is unavailable");
+  return projectOriginalMarketServices(await readBoundedSource(response), selection);
+}
+
+export function renderServiceOfferPage(reading) {
+  const {offer, source, qualifications} = reading;
+  const h = escapeHtml;
+  const name = h(offer.name), sku = h(offer.sku);
+  const schema = offer.input?.bodySchema;
+  const output = offer.output?.schema;
+  const properties = schema && typeof schema === "object" && !Array.isArray(schema) &&
+    schema.properties && typeof schema.properties === "object" && !Array.isArray(schema.properties)
+      ? Object.entries(schema.properties).slice(0, 24) : [];
+  const required = new Set(Array.isArray(schema?.required) ? schema.required : []);
+  const fields = properties.map(([key, value]) => {
+    const node = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    const type = typeof node.type === "string" ? node.type :
+      Array.isArray(node.type) ? node.type.filter(t => typeof t === "string").join(" | ") : "Not declared";
+    const description = typeof node.description === "string" ? node.description.slice(0, 400) : "";
+    return `<tr><th scope="row">${h(key)}</th><td>${h(type)}</td><td>${required.has(key) ? "Required" : "Optional"}</td><td>${h(description)}</td></tr>`;
+  }).join("");
+  const contract = value => {
+    if (!value || typeof value !== "object") return "<p>No structured contract supplied in this catalog record.</p>";
+    const json = JSON.stringify(value, null, 2);
+    return json.length > 16384
+      ? "<p>The contract is too large for the inline preview. Inspect the exact machine-readable offer instead.</p>"
+      : `<pre tabindex="0">${h(json)}</pre>`;
+  };
+  const endpoint = offer.method === "GET"
+    ? `<a href="${h(offer.endpoint)}" rel="nofollow">Visit original seller endpoint (may require x402 payment)</a>`
+    : `<code>${h(offer.method)} ${h(offer.endpoint)}</code>`;
+  const provider = offer.seller?.enterprise ?? "Not identified in the catalog";
+  const machine = `/services/offer.json?${new URLSearchParams({sku:offer.sku})}`;
+  const sourceStatus = `${qualifications.listing}. ${qualifications.checkout}.`;
+  const sectionLink = offer.section === undefined ? "" :
+    `<p>Service section: <a href="/services?${h(new URLSearchParams({section:offer.section}))}">${h(offer.section)}</a></p>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${name} · 561 Group Shop</title><meta name="description" content="Inspect the original service input, output, price preview and x402 purchase boundary."><style>
+    body{font:1rem/1.55 system-ui,sans-serif;color:#222;max-width:68rem;margin:auto;padding:1rem 2rem}
+    a{color:#174b90}header,footer{border-block:1px solid #aaa;padding:.85rem 0}
+    section{padding:0 0 1.25rem}table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #999;padding:.45rem;text-align:left;vertical-align:top}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:30rem;overflow:auto;background:#f3f3f3;padding:1rem}
+    code{overflow-wrap:anywhere}small{color:#444}details{margin-block:.5rem 1rem}
+  </style></head><body><header><nav aria-label="Shop navigation"><a href="/">561 Group Shop</a> · <a href="/services">All services</a> · <a href="https://bazaar.561.group">Bazaar</a></nav></header>
+  <main><h1>${name}</h1><p>${h(offer.description)}</p><p><strong>Original offer:</strong> <code>${sku}</code></p>${sectionLink}
+  <section aria-labelledby="provider"><h2 id="provider">Service provider and price</h2><p>Provider: ${h(provider)}. Original seller: ${h(source.market)}.</p>
+  <p><strong>Catalog price preview:</strong> ${h(offer.pricePreview ?? "Unavailable")}. This is not a current payable quote.</p>
+  <p><strong>Source rights verification:</strong> ${h(offer.sourceRightsVerification)}.</p>
+  <p><strong>Checkout:</strong> Not available through this Shop detail page. Request the resource from its original seller to receive any current HTTP 402 payment requirements; payment authorization and delivery remain with the actual x402 client and seller.</p>
+  <p>${endpoint} · <a href="${h(offer.inspectUrl)}">Inspect original Bazaar listing</a></p></section>
+  <section aria-labelledby="input"><h2 id="input">What this service accepts</h2><p>Method: <strong>${h(offer.method)}</strong>. The request's admitted fields are described by the source contract, not an invented checkout form.</p>
+  ${properties.length ? `<div role="region" aria-label="Source-declared input fields" tabindex="0"><table><caption>Input fields (first ${properties.length})</caption><thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Required</th><th scope="col">Description</th></tr></thead><tbody>${fields}</tbody></table></div>` : "<p>The seller did not declare individually displayable input fields.</p>"}
+  <details><summary>Structured request body schema</summary>${contract(schema)}</details></section>
+  <section aria-labelledby="output"><h2 id="output">What the service returns</h2><details><summary>Structured output schema</summary>${contract(output)}</details></section>
+  <section aria-labelledby="agent"><h2 id="agent">For agents and technical buyers</h2>
+  <p>Use the <a href="${h(machine)}">single-offer JSON readout</a> to inspect the exact source-reported method, URL, input and output contracts. Source records do not substitute for an actual 402 challenge, a signed payment authorization or a witnessed delivery.</p>
+  <p><small>${h(sourceStatus)}</small></p></section></main>
+  <footer><small>561 Group Shop · An original Market offer is displayed, not resold or settled here.</small></footer></body></html>`;
+}
+
+export async function serviceOfferResponse(request, {fetchSource = fetch} = {}) {
+  const url = new URL(request.url);
+  if (!["GET", "HEAD"].includes(request.method))
+    return new Response(null, {status:405,headers:{allow:"GET, HEAD"}});
+  if (url.pathname !== "/services/offer" && url.pathname !== "/services/offer.json")
+    return reject(404, "Unknown service detail path");
+  const entries = [...url.searchParams.keys()];
+  const sku = url.searchParams.get("sku");
+  if (entries.length !== 1 || entries[0] !== "sku" || url.searchParams.getAll("sku").length !== 1 ||
+      !/^ni:\/\/\/sha-256;[A-Za-z0-9_-]{43}$/.test(sku ?? ""))
+    return reject(400, "Select one exact original service identity");
+  let page;
+  try {
+    page = await loadOriginalMarketPage(selector({query:sku,offset:0,limit:MAX_PAGE}),fetchSource);
+  } catch {
+    return reject(503, "Source-qualified service details temporarily unavailable");
+  }
+  if (page === null) return reject(400, "Invalid original service selection");
+  if (page.total > MAX_PAGE) return reject(503, "Original seller search coverage is too broad to identify this offer");
+  const found = page.services.filter(row => row.sku === sku);
+  if (found.length === 0) return reject(404, "Original listed service not found");
+  if (found.length !== 1) return reject(503, "Original seller returned an ambiguous service identity");
+  const reading = Object.freeze({
+    recordType:"561-group.shop.original-service-detail.v1",
+    source:page.source, qualifications:page.qualifications,
+    offer:found[0], sourceSearchCount:page.total,
+  });
+  const json = url.pathname.endsWith(".json");
+  const payload = json ? JSON.stringify(reading) : renderServiceOfferPage(reading);
+  return new Response(request.method === "HEAD" ? null : payload, {
+    status:200,
+    headers:{
+      "content-type":json?"application/json; charset=utf-8":"text/html; charset=utf-8",
+      "cache-control":"public, max-age=60",
+      "x-content-type-options":"nosniff",
+      "access-control-allow-origin":json?"*":"https://shop.561.group",
+      ...(json?{}:{"content-security-policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'"}),
+    }
+  });
+}
+
 function reject(status, message) {
   return Response.json({ error: message, source: MARKET_CATALOG_URL }, {
     status, headers: { "cache-control": "no-store", "access-control-allow-origin": "*",
@@ -232,19 +348,8 @@ export async function serviceBrowseResponse(request, { fetchSource = fetch } = {
   }
   let projection;
   try {
-    const response = await fetchSource(marketServicePageUrl(selection), {
-      method: "GET", redirect: "manual", credentials: "omit",
-      signal: AbortSignal.timeout(10000), headers: { accept: "application/json" }
-    });
-    if (response.status === 400) {
-      await response.body?.cancel();
-      return reject(400, "Invalid service section or search arguments");
-    }
-    if (response.status !== 200 ||
-        !response.headers.get("content-type")?.includes("application/json") ||
-        Number(response.headers.get("content-length") ?? 0) > MAX_UPSTREAM_BYTES)
-      throw new TypeError("Original seller read is unavailable");
-    projection = projectOriginalMarketServices(await readBoundedSource(response), selection);
+    projection = await loadOriginalMarketPage(selection, fetchSource);
+    if (projection === null) return reject(400, "Invalid service section or search arguments");
   } catch {
     return reject(503, "Source-qualified service catalog temporarily unavailable");
   }
