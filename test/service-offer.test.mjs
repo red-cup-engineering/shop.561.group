@@ -67,7 +67,7 @@ test('human detail renders semantic contract, accessible fields and correct buyi
   assert.match(html,/Structured output schema/);
   assert.match(html,/not a current payable quote/);
   assert.match(html,/Not available through this Shop detail page/);
-  assert.match(html,/Original Bazaar listing/);
+  assert.match(html,/Inspect original Bazaar listing/);
   assert.match(html,/single-offer JSON readout/);
   assert.match(response.headers.get('content-security-policy'),/default-src 'none'/);
   for(const leak of ['should-never-leak','not-an-export','<script>oops</script>'])
