@@ -28,7 +28,7 @@ const runtime = createDigitalGoodsStorefrontWorker({
 // Crawler documents are the catalog's own view: the storefront and one page per offering.
 const ORIGIN = "https://shop.561.group";
 function sitemap() {
-  const paths = ["/", "/services", "/support", ...catalog.offerings.map((offering) => `/goods/${offering.id}`)];
+  const paths = ["/", "/services", "/services/compare", "/services/basket", "/support", ...catalog.offerings.map((offering) => `/goods/${offering.id}`)];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map((path) => `  <url><loc>${ORIGIN}${path}</loc></url>`).join("\n")}\n</urlset>\n`;
 }
 
