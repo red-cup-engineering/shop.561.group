@@ -156,6 +156,7 @@ test("original basket refuses source arithmetic identities that contradict buyer
     o=>{o.paymentAuthorized=true;},
     o=>{o.purchaseExecuted=true;},
     o=>{o.deliveryReceived=true;},
+    o=>{o.maximumTotalAtomic="99999";},
     o=>{o.withinAdvertisedCeiling="true";},
     o=>{o.pricedSubtotalAtomic="-10";},
   ]){
