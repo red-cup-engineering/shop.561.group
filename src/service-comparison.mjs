@@ -5,6 +5,7 @@
  * Shop is a bounded, nonoperative HTML/JSON presentation consumer only.
  */
 import {MAX_ORIGINAL_MARKET_BYTES, readBoundedOriginalMarketJson} from "./original-market-reader.mjs";
+import {SHOP_SERVICE_STYLES} from "./shop-service-styles.mjs";
 
 export const ORIGINAL_MARKET_COMPARISON_URL = "https://market.561.group/v1/market/compare";
 const EXACT_SKU = /^ni:\/\/\/sha-256;[A-Za-z0-9_-]{43}$/u;
@@ -158,7 +159,7 @@ export function renderServiceComparisonHTML(reading) {
     'a{color:#174b90}table{width:100%;min-width:42rem;border-collapse:collapse}'+
     'th,td{border:1px solid #999;padding:.6rem;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}'+
     'thead th{min-width:15rem}small{display:block;font-size:.75rem}'+
-    'header,footer{border-block:1px solid #aaa;padding:1rem 0}input{padding:.45rem;max-width:100%}</style>'+
+    'header,footer{border-block:1px solid #aaa;padding:1rem 0}input{padding:.45rem;max-width:100%}'+SHOP_SERVICE_STYLES+'</style>'+
     '</head><body><header><nav aria-label="Shop navigation"><a href="/">561 Group Shop</a> · '+
     '<a href="/services">Browse services</a> · <a href="https://market.561.group">Original Market</a></nav></header>'+
     '<main><h1>Compare API services</h1><p>'+h(reading.interpretation)+'</p>'+
