@@ -5,10 +5,12 @@ on:
     paths:
       - 'src/service-discovery.mjs'
       - 'src/service-comparison.mjs'
+      - 'src/service-budget.mjs'
       - 'src/original-market-reader.mjs'
       - 'src/worker.mjs'
       - 'test/service-offer.test.mjs'
       - 'test/service-comparison.test.mjs'
+      - 'test/service-budget.test.mjs'
       - 'test/service-discovery.test.mjs'
       - '.github/workflows/source-qualified-service-offers.yml'
   push:
@@ -16,10 +18,12 @@ on:
     paths:
       - 'src/service-discovery.mjs'
       - 'src/service-comparison.mjs'
+      - 'src/service-budget.mjs'
       - 'src/original-market-reader.mjs'
       - 'src/worker.mjs'
       - 'test/service-offer.test.mjs'
       - 'test/service-comparison.test.mjs'
+      - 'test/service-budget.test.mjs'
       - 'test/service-discovery.test.mjs'
       - '.github/workflows/source-qualified-service-offers.yml'
 
@@ -43,10 +47,12 @@ jobs:
         run: |
           node --check src/service-discovery.mjs
           node --check src/service-comparison.mjs
+          node --check src/service-budget.mjs
           node --check src/original-market-reader.mjs
           node --check src/worker.mjs
           node --check test/service-discovery.test.mjs
           node --check test/service-offer.test.mjs
           node --check test/service-comparison.test.mjs
+          node --check test/service-budget.test.mjs
       - name: Receive directory and exact-offer source journeys
-        run: node --test --test-reporter=tap test/service-discovery.test.mjs test/service-offer.test.mjs test/service-comparison.test.mjs
+        run: node --test --test-reporter=tap test/service-discovery.test.mjs test/service-offer.test.mjs test/service-comparison.test.mjs test/service-budget.test.mjs
