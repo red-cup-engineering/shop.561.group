@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {renderServiceBrowse, projectOriginalMarketServices, renderServiceOfferPage, serviceOfferResponse} from '../src/service-discovery.mjs';
+import {renderServiceBrowse, projectOriginalMarketServices, renderServiceOfferPage, serviceOfferResponse, routeServiceDiscovery} from '../src/service-discovery.mjs';
 
 const a='ni:///sha-256;'+'A'.repeat(43);
 const b='ni:///sha-256;'+'B'.repeat(43);
@@ -171,4 +171,31 @@ test('large or absent schemas disclose their limits instead of creating fake fie
   assert.doesNotMatch(html,/<th scope="row">field24<\/th>/);
   assert.match(html,/No structured contract supplied/);
   assert.doesNotMatch(html,/checkout-form|payment-token/);
+});
+
+
+test('one native route dispatcher owns human and machine service readings',async()=>{
+  const calls=[];
+  const original=source([offer()]);
+  for(const path of ['/services','/services.json','/services/offer','/services/offer.json']){
+    const endpoint=path.includes('/offer')?url(a,path):'https://shop.561.group'+path;
+    const result=routeServiceDiscovery(new Request(endpoint),{fetchSource:serve(original,calls)});
+    assert.ok(result!==null);
+    const response=await result;
+    assert.equal(response.status,200,path);
+    assert.match(response.headers.get('content-type'),path.endsWith('json')?/json/:/html/);
+  }
+  assert.equal(calls.length,4,'one original read per customer entrance');
+  assert.equal(calls.every(item=>item.options.method==='GET'),true);
+});
+
+test('non-service routes return control to the unchanged books/fulfillment runtime',()=>{
+  let contacted=0;
+  for(const path of ['/','/goods/edition','/webhooks/stripe','/services/unapproved','/mcp']){
+    const returned=routeServiceDiscovery(new Request('https://shop.561.group'+path),{
+      fetchSource:async()=>{contacted++;throw Error('unexpected catalog read')},
+    });
+    assert.equal(returned,null,path);
+  }
+  assert.equal(contacted,0);
 });
