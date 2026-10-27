@@ -4,6 +4,7 @@
  * USD, current HTTP 402 challenges, charges or wallet authorizations.
  */
 import {MAX_ORIGINAL_MARKET_BYTES,readBoundedOriginalMarketJson} from "./original-market-reader.mjs";
+import {SHOP_SERVICE_STYLES} from "./shop-service-styles.mjs";
 export const ORIGINAL_MARKET_BASKET_URL = "https://market.561.group/v1/market/basket";
 const NI=/^ni:\/\/\/sha-256;[A-Za-z0-9_-]{43}$/u;
 const ATOMIC=/^(0|[1-9][0-9]{0,77})$/u;
@@ -99,7 +100,7 @@ function basePage(content) {
     '<style>body{font:1rem/1.55 system-ui,sans-serif;margin:auto;max-width:68rem;padding:1rem 1.5rem;color:#222}'+
     'a{color:#174b90}fieldset{margin:.75rem 0}label{display:block;margin:.5rem 0}'+
     'input{padding:.4rem;max-width:100%}th,td{border:1px solid #aaa;padding:.5rem;text-align:left;vertical-align:top}'+
-    'table{border-collapse:collapse;width:100%}</style></head><body>'+
+    'table{border-collapse:collapse;width:100%}'+SHOP_SERVICE_STYLES+'</style></head><body>'+
     '<header><nav><a href="/">561 Group Shop</a> · <a href="/services">Browse services</a> · '+
     '<a href="https://market.561.group">Original Market</a></nav></header>'+
     '<main><h1>Plan API calls without a wallet</h1>'+
