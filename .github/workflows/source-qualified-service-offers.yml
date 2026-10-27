@@ -11,6 +11,7 @@ on:
       - 'test/service-offer.test.mjs'
       - 'test/service-comparison.test.mjs'
       - 'test/service-budget.test.mjs'
+      - 'test/service-buyer-journey.test.mjs'
       - 'test/service-discovery.test.mjs'
       - '.github/workflows/source-qualified-service-offers.yml'
   push:
@@ -24,6 +25,7 @@ on:
       - 'test/service-offer.test.mjs'
       - 'test/service-comparison.test.mjs'
       - 'test/service-budget.test.mjs'
+      - 'test/service-buyer-journey.test.mjs'
       - 'test/service-discovery.test.mjs'
       - '.github/workflows/source-qualified-service-offers.yml'
 
@@ -54,5 +56,6 @@ jobs:
           node --check test/service-offer.test.mjs
           node --check test/service-comparison.test.mjs
           node --check test/service-budget.test.mjs
+          node --check test/service-buyer-journey.test.mjs
       - name: Receive directory and exact-offer source journeys
-        run: node --test --test-reporter=tap test/service-discovery.test.mjs test/service-offer.test.mjs test/service-comparison.test.mjs test/service-budget.test.mjs
+        run: node --test --test-reporter=tap test/service-discovery.test.mjs test/service-offer.test.mjs test/service-comparison.test.mjs test/service-budget.test.mjs test/service-buyer-journey.test.mjs
