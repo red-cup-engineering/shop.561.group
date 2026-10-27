@@ -1,6 +1,8 @@
 name: Publication source preflight
-# The source-only preflight contract and its refusal cases. Moved here from 561-group/bare-cedar-fog, which tested
-# this site's files from outside; reading every listed manuscript needs the composed section tree and stays there.
+# Public, independent source-only CI. The owning Shop parameters are a PRIVATE
+# Causeway repository: never clone it into an untrusted public PR runner or
+# fall back from an absent scoped private read token to github.token.
+# This job is not release, fulfillment, signed payment or buyer-route receiving.
 on:
   push:
     branches: [main]
@@ -13,70 +15,126 @@ concurrency:
   cancel-in-progress: true
 jobs:
   contract:
+    name: Public source contracts (private integration not qualified)
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
-          # parameters/ is the private causeway-services/public-shop-services-section
-          # (catalog.json, data/records, ops): the data that parameterizes this build.
-          # GITHUB_TOKEN cannot read another private repository; set the
-          # PARAMETERS_READ_TOKEN secret (read-only on public-*-services-section).
-          submodules: true
-          token: ${{ secrets.PARAMETERS_READ_TOKEN || github.token }}
+          submodules: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Verify the source-only preflight contract and refusal cases
-        run: node --test test/publication-source-preflight.test.mjs
-      # This public, dependency-free source check runs under the declared Node 24
-      # toolchain; it is not full pinned-package or deployed Worker receiving.
-      - name: Verify native Market service browsing and refusal behavior
+      - name: Refuse private Shop parameter leakage in public runner
+        run: |
+          if test -f parameters/catalog.json; then
+            echo '::error title=Shop private source custody::Do not expose private seller records in public pull-request CI'
+            exit 1
+          fi
+          echo 'Original Causeway private parameters remain outside this public runner'
+      - name: Qualify original publication source and refusal controls
+        run: |
+          node --check scripts/audit-publication-source.mjs
+          node --test test/publication-source-preflight.test.mjs
+      - name: Qualify source-owned service discovery and privacy/refusal controls
         run: |
           node --check src/service-discovery.mjs
           node --test test/service-discovery.test.mjs
-
-      - name: Verify original open-work campaign, safe checkout routes, and share pack
+      - name: Qualify unsigned public buyer receiver against synthetic normal and refusal cases
         run: |
+          node --check scripts/receive-public-shop.mjs
+          node --test test/receive-public-shop.test.mjs
+      # Real support route/validation implementation under synthetic inputs;
+      # unlike the data-bound merchant fixture this code has no private Gitlink.
+      - name: Qualify parameter-independent merchant routes and attribution
+        run: |
+          node --check src/support-campaign-core.mjs
           node --check src/support-campaign.mjs
-          node --check scripts/export-support-campaign.mjs
-          node --test test/support-campaign.test.mjs
-          node scripts/export-support-campaign.mjs --json >/tmp/open-work-campaign.json
-          node scripts/export-support-campaign.mjs --csv >/tmp/open-work-attribution.csv
-      - name: Verify source-only accepted-books Atom discovery
+          node --test test/support-campaign-core.test.mjs
+      - name: Qualify original Stripe support Checkout classifications without payment authority
+        run: |
+          node --check src/support-checkout-attribution.mjs
+          node --check scripts/reconcile-support-checkouts.mjs
+          node --test test/support-checkout-attribution.test.mjs
+      - name: Qualify source-owned buyer-route probe and Worker-first support routing
+        run: |
+          node --check src/support-public-probe.mjs
+          node --check scripts/probe-public-support.mjs
+          node --test test/support-public-probe.test.mjs test/support-worker-routing.test.mjs
+      - name: Qualify accepted-book publication feed without private catalog
         run: |
           node --check src/book-feed.mjs
           node --test test/book-feed.test.mjs
-      - name: Verify cross-feature Shop source integration
+      - name: Withhold private Worker and economic acceptance explicitly
         run: |
-          node --check test/shop-commerce-integration.test.mjs
-          node --test test/shop-commerce-integration.test.mjs
+          echo '::notice title=Source-only preflight::Private Causeway parameters, pinned Worker, Cloudflare installation, live buyer routes, paid orders and accepted delivery were not qualified by this public run'
+          echo 'PUBLIC SOURCE CONTRACT ONLY. Private parameter/source integration, full dependency-closed Worker build, accepted covers and actual installed buyer-route receiving require source-authorized independent Coesite qualification. Passing this workflow does not authorize merge or deployment.' >> "$GITHUB_STEP_SUMMARY"
 
-      # This one PR is the release-receiving integration of existing source work.
-      # No secrets, payments, deployments, new recurring tasks or billed runners.
-      # Standard ubuntu-24.04 runners in this public repository are free.
-      - name: Receive original author-only links without changing editions
+# The original private catalog is consumed only on trusted, accepted
+  # main source, NEVER from pull_request / untrusted candidate code. Unlike
+  # the source-only job, this receiver MUST FAIL on missing source, token,
+  # frozen package closure, invalid Worker or refusal test. No deployment.
+  native-private-release-contract:
+    name: Trusted main source + private Worker qualification (no deployment)
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    needs: [contract]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Require the existing scoped private-source reader
+        env:
+          PARAMETERS_READ_TOKEN: ${{ secrets.PARAMETERS_READ_TOKEN }}
         run: |
-          node --check scripts/reconcile-authored-offer-links.mjs
-          node --check scripts/edition-illustration-provenance.mjs
-          node scripts/reconcile-authored-offer-links.mjs --check
-          node --test test/reconcile-authored-offer-links.test.mjs test/compile-catalog.test.mjs
-
-      - name: Qualify full pinned Shop Worker and non-deploying Wrangler bundle
-        if: github.event_name == 'pull_request' && github.head_ref == 'integration/commerce-shop-original-three-20261022'
+          if test -z "$PARAMETERS_READ_TOKEN"; then
+            echo '::error title=Private Shop source not received::A scoped read-only PARAMETERS_READ_TOKEN is required for the original private Causeway parameters Gitlink; no github.token fallback'
+            exit 1
+          fi
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          submodules: true
+          token: ${{ secrets.PARAMETERS_READ_TOKEN }}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Receive original private catalog and immutable source selection
+        shell: bash
         run: |
-          node --version
+          # The private parameters Gitlink has root catalog.json. This is the
+          # exact path consumed by the original Shop catalog compiler; data/
+          # contains seller-authored records, not a second canonical catalog.
+          if ! test -f parameters/catalog.json; then
+            echo '::error title=Shop source selection failed::Original private Causeway catalog not present at its declared Gitlink root'
+            exit 1
+          fi
+          # A readable checkout is not enough. Accept only the exact source
+          # commit selected by this Shop release's committed Gitlink.
+          selected="$(git rev-parse HEAD:parameters)"
+          received="$(git -C parameters rev-parse HEAD)"
+          if ! test "$received" = "$selected"; then
+            echo '::error title=Shop source revision mismatch::Private catalog checkout differs from the source-selected Gitlink'
+            exit 1
+          fi
+          printf '%s\n' "$received" > "$RUNNER_TEMP/shop-parameters-commit"
+          test -s "$RUNNER_TEMP/shop-parameters-commit"
+          echo 'Original private catalog and exact source-selected revision received; contents and credentials withheld'
+      - name: Qualify exact Node24 frozen Shop dependency closure and source scenarios
+        run: |
           npx --yes pnpm@10.21.0 install --frozen-lockfile --ignore-scripts --reporter=append-only
           npm run check
           npm test
-          # This standalone GitHub checkout does NOT hold the original ten
-          # publisher-owned, untracked accepted cover assets. The empty
-          # ephemeral directory tests ONLY Worker bundling. It is NOT a
-          # releasable static-assets receipt or installation qualification.
-          if [ ! -d public ]; then
-            echo 'Worker-only dry-run: accepted book covers unavailable in isolated source checkout'
+      - name: Qualify genuine Worker bundle without publishing or accepting missing covers
+        run: |
+          # Source checkout lacks the ten publisher-owned cover artifacts:
+          # this is strictly a Worker bundling test, never a ready release.
+          if ! test -d public; then
             mkdir -p public
+            echo 'Accepted book covers are NOT in this checkout; Worker bundle only'
           fi
-          ./node_modules/.bin/wrangler deploy --dry-run --outdir /tmp/shop-561-receiving
+          ./node_modules/.bin/wrangler deploy --dry-run --outdir "$RUNNER_TEMP/shop-worker-bundle"
+          echo 'SOURCE + DEPENDENCY + DRY BUNDLE ONLY; NOT installed buyer/checkout acceptance' >> "$GITHUB_STEP_SUMMARY"
