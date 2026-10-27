@@ -366,3 +366,18 @@ export async function serviceBrowseResponse(request, { fetchSource = fetch } = {
   });
 }
 
+
+
+/**
+ * One source-owned dispatch for Shop service discovery. Unknown routes return
+ * null to the original digital-goods Worker. No source read, wallet action or
+ * local customer state is created by dispatch itself.
+ */
+export function routeServiceDiscovery(request, {fetchSource = fetch} = {}) {
+  const path = new URL(request.url).pathname;
+  if (path === '/services/offer' || path === '/services/offer.json')
+    return serviceOfferResponse(request, {fetchSource});
+  if (path === '/services' || path === '/services.json')
+    return serviceBrowseResponse(request, {fetchSource});
+  return null;
+}
