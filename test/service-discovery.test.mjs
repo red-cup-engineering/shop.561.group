@@ -100,9 +100,12 @@ test("service cards HTML-escape seller descriptions and do not make a fake buy b
   assert.match(html, /&amp; &lt;script&gt;not markup&lt;\/script&gt;/u);
   assert.doesNotMatch(html, /<script>/u);
   assert.match(html, /owning service section/u);
+  assert.match(html, /Compare original APIs/u);
+  assert.match(html, /Plan an exact source-priced API budget/u);
   assert.doesNotMatch(html, /<form[^>]*checkout/u);
   assert.match(html, /bazaar\.561\.group\/offers\?source=house-x402&amp;id=/u);
-  assert.match(html, /View service details/u);
+  assert.match(html, /Inspect input, output and buying options in the Shop/u);
+  assert.match(html, /\/services\/offer\?sku=ni%3A%2F%2F%2Fsha-256%3B/u);
   assert.doesNotMatch(html, /market\.561\.group\/\?offer=/u);
 });
 
