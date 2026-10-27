@@ -53,6 +53,16 @@ jobs:
           node --check src/support-campaign-core.mjs
           node --check src/support-campaign.mjs
           node --test test/support-campaign-core.test.mjs
+      - name: Qualify original Stripe support Checkout classifications without payment authority
+        run: |
+          node --check src/support-checkout-attribution.mjs
+          node --check scripts/reconcile-support-checkouts.mjs
+          node --test test/support-checkout-attribution.test.mjs
+      - name: Qualify source-owned buyer-route probe and Worker-first support routing
+        run: |
+          node --check src/support-public-probe.mjs
+          node --check scripts/probe-public-support.mjs
+          node --test test/support-public-probe.test.mjs test/support-worker-routing.test.mjs
       - name: Qualify accepted-book publication feed without private catalog
         run: |
           node --check src/book-feed.mjs

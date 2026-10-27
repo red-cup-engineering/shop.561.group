@@ -125,6 +125,72 @@ bindings and the `ShopFulfillment` Durable Object registration.
   while a book is coming soon, its link states the review terms, it stops
   downloading when the reading window closes, and it can be withdrawn.
 
+## Private Stripe Checkout observation, not revenue recognition (October 23, 2026)
+
+The existing `/support` campaign has four **outside-catalog** live emsenn Payment
+Links. The original `scripts/export-support-campaign.mjs` produces the fixed
+channel share/attribution pack; **new read-only** `npm run
+marketing:reconcile -- <private-observation.json>` consumes a captured Stripe
+`GET /v1/checkout/sessions` response without any API key. The private input
+wrapper must contain exactly these fields:
+
+```json
+{
+  "stripeContext": "acct_18eDiqJ1vYnPQu2N",
+  "livemode": true,
+  "observedAt": "2026-10-23T18:30:00Z",
+  "checkoutSessions": {"object": "list", "data": [], "has_more": false}
+}
+```
+
+Use the exact real GET response under `checkoutSessions`; an empty array in
+this illustration is **not a provider observation**. Import only from the
+authenticated matching Stripe merchant and maintain its access separately.
+**Do not commit a real response:** it may contain customer personal information
+or transaction references. The local consumer projects counts by the four
+original source-pinned Payment Link IDs, rejects wrong-account/mixed-test data,
+duplicate session IDs, malformed paid amounts and bad pagination shapes, and
+never echoes customer fields. An unknown Payment Link is reported only as an
+unattributed observed row. An open unpaid Checkout is not qualified buyer demand,
+a completed paid Checkout is not accepted delivery, a recurring **first**
+Checkout is not a renewed subscription, and provider gross is not revenue
+cleared to the 561 Group.
+
+`inputCoverage` is explicitly either `additional-pages-unread` or
+`supplied-terminal-page-only`. Even a terminal page does not prove that the
+caller supplied an unfiltered, exhaustive account history; the script itself
+cannot authenticate the import. Fees, refunds, customer acceptance, actual
+subscription invoices, bank deposits and **Group** after-cost contribution
+remain `null` until independently source-received by the original provider,
+merchant and Finance operations. No attribution result authorizes outreach,
+Stripe mutation, book entitlement, deployment or a new contract. Native
+regressions live in `test/support-checkout-attribution.test.mjs`; this is a
+candidate **source** capability, not proof that `shop.561.group` is running
+it or that any new merchant payment occurred.
+
+For **four separately filtered Stripe Checkout list responses**, preserve the
+actual provider pagination and do not fabricate a combined all-account list.
+Pass `checkoutSessionsByLink` **instead of** `checkoutSessions` in the
+same dated merchant observation wrapper. It is an array of four records,
+each `{paymentLinkId, checkoutSessions}`, with the exact source-pinned
+Payment Link ID and that ID's original
+`GET /v1/checkout/sessions?payment_link=<id>` response. Every original
+source link must occur exactly once, and each returned session must carry
+the exact link queried. Wrong/missing links, mixed input modes, duplicate
+sessions, malformed list envelopes, and invalid paid amounts refuse.
+`inputQueryMode` distinguishes the input shape;
+`source-selected-terminal-link-pages` means all **four supplied filtered
+lists** said `has_more=false`, **not** that the caller proved exhaustive
+account history. `source-selected-link-pages-unread` explicitly identifies
+a still-paginated response. This privacy-minimal offline parser cannot
+authenticate a caller's query URL or reclassify Stripe gross as delivered
+customer value, personal bank clearance, or Group revenue.
+
+Original commercial Work and acceptance remain
+[Causeway Public Services #17](https://github.com/causeway-services/public-services-section/issues/17).
+The live-data confirmation and Source→Install→Buyer→Finance separation are
+independent receiving jobs.
+
 ## Receiving voluntary emsenn video-support checkouts into the original Shop economic audit
 
 An externally hosted payment link is **not** a Shop book checkout. The live emsenn channel's source-owned `config.json` identifies an active $10 USD/month Stripe Payment Link operated by checkout merchant **emsenn** for a 561 Group public education purpose. The current Shop seller catalog still names 561 Group for its separate books. These merchant/program identities must not be collapsed into one legal beneficiary or a sale of books.
