@@ -1,3 +1,4 @@
+import {MAX_ORIGINAL_MARKET_BYTES, readBoundedOriginalMarketJson} from "./original-market-reader.mjs";
 // Read-only human and machine storefront projection of the ORIGINAL x402 seller.
 // Shop does not become another merchant, invent prices or accept agent payment here.
 export const MARKET_CATALOG_URL = "https://market.561.group/v1/catalog";
@@ -13,7 +14,7 @@ const MARKET_ORIGIN = "https://market.561.group";
 // The Bazaar source declaration names this original seller as house-x402.
 // A source-qualified inspection link neither reissues its offer nor pays for it.
 const BAZAAR_SOURCE_OFFER_URL = "https://bazaar.561.group/offers?source=house-x402&id=";
-const MAX_UPSTREAM_BYTES = 4_000_000;
+const MAX_UPSTREAM_BYTES = MAX_ORIGINAL_MARKET_BYTES;
 const MAX_LEGACY_LISTED = 500;
 const MAX_OFFSET = 100000;
 const MAX_PAGE = 50;
@@ -169,35 +170,6 @@ export function renderServiceBrowse(projection) {
 
 // Enforce the byte cap WHILE consuming a streamed upstream body. Calling
 // response.text() before checking size would still buffer an unbounded payload.
-async function readBoundedSource(response) {
-  if (!response.body) throw new TypeError("Original seller returned an empty body");
-  const reader = response.body.getReader();
-  const chunks = [];
-  let size = 0;
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > MAX_UPSTREAM_BYTES) throw new TypeError("Seller read exceeds expected size");
-      chunks.push(value);
-    }
-  } catch (error) {
-    await reader.cancel().catch(() => {});
-    throw error;
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-}
-
-
 
 async function loadOriginalMarketPage(selection, fetchSource) {
   const response = await fetchSource(marketServicePageUrl(selection), {
@@ -212,7 +184,7 @@ async function loadOriginalMarketPage(selection, fetchSource) {
       !response.headers.get("content-type")?.includes("application/json") ||
       Number(response.headers.get("content-length") ?? 0) > MAX_UPSTREAM_BYTES)
     throw new TypeError("Original seller read is unavailable");
-  return projectOriginalMarketServices(await readBoundedSource(response), selection);
+  return projectOriginalMarketServices(await readBoundedOriginalMarketJson(response), selection);
 }
 
 export function renderServiceOfferPage(reading) {
