@@ -122,6 +122,7 @@ export function renderServiceComparisonHTML(reading) {
     'aria-label="Source service comparison, scroll horizontally if needed" style="overflow-x:auto">'+
     '<table><caption>Source-declared information for '+offers.length+' publicly listed offers</caption>'+
     '<thead><tr><th scope="col">Source property</th>'+headings+'</tr></thead><tbody>'+
+    row("Service description",offer=>offer.description)+
     row("Declared operation",offer=>offer.operation)+
     row("HTTP method",offer=>offer.method)+
     row("Service category",offer=>offer.category??"Not declared")+
