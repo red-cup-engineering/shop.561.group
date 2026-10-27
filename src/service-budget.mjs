@@ -36,7 +36,7 @@ export function admitOriginalMarketBasket(raw,requested) {
       raw.lines.length!==requested.skus.length ||
       raw.paymentAuthorized!==false || raw.purchaseExecuted!==false ||
       raw.deliveryReceived!==false || typeof raw.complete!=="boolean" ||
-      typeof raw.withinAdvertisedCeiling!=="boolean" ||
+      (raw.withinAdvertisedCeiling!==null && typeof raw.withinAdvertisedCeiling!=="boolean") ||
       (raw.pricedSubtotalAtomic!==null && !ATOMIC.test(raw.pricedSubtotalAtomic)) ||
       (raw.advertisedTotalAtomic!==null && !ATOMIC.test(raw.advertisedTotalAtomic)))
     throw new TypeError("Original seller supplied no admitted read-only basket");
@@ -111,7 +111,7 @@ export function renderOriginalMarketBudgetPage(budget,selection) {
     '<td>'+h(line.extendedAmountAtomic??"Unknown or variable")+'</td></tr>').join("");
   const findings='<p><strong>Seller advertised state:</strong> '+h(budget.state)+
     '. <strong>Completeness:</strong> '+(budget.complete?"Complete fixed-price preview":"Incomplete; at least one item cannot be priced")+
-    '. <strong>Under selected ceiling:</strong> '+(budget.withinAdvertisedCeiling?"Yes, by source preview":"No, or not supported by source preview")+
+    '. <strong>Under selected ceiling:</strong> '+(budget.withinAdvertisedCeiling===null?"Unknown: incomplete source pricing":budget.withinAdvertisedCeiling?"Yes, by original source preview":"No, by original source preview")+
     '.</p><p><strong>Priced subtotal (atomic):</strong> '+h(budget.pricedSubtotalAtomic??"Unknown")+
     '. <strong>Advertised total (atomic):</strong> '+h(budget.advertisedTotalAtomic??"Unknown")+
     '. <strong>Selected maximum (atomic):</strong> '+h(budget.maximumTotalAtomic)+
