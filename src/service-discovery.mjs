@@ -219,6 +219,7 @@ export function renderServiceOfferPage(reading) {
     : `<code>${h(offer.method)} ${h(offer.endpoint)}</code>`;
   const provider = offer.seller?.enterprise ?? "Not identified in the catalog";
   const machine = `/services/offer.json?${new URLSearchParams({sku:offer.sku})}`;
+  const relay = `/services/execute?${new URLSearchParams({sku:offer.sku})}`;
   const sourceStatus = `${qualifications.listing}. ${qualifications.checkout}.`;
   const sectionLink = offer.section === undefined ? "" :
     `<p>Service section: <a href="/services?${h(new URLSearchParams({section:offer.section}))}">${h(offer.section)}</a></p>`;
@@ -235,6 +236,7 @@ export function renderServiceOfferPage(reading) {
   <p><strong>Catalog price preview:</strong> ${h(offer.pricePreview ?? "Unavailable")}. This is not a current payable quote.</p>
   <p><strong>Source rights verification:</strong> ${h(offer.sourceRightsVerification)}.</p>
   <p><strong>Checkout:</strong> Not available through this Shop detail page. Request the resource from its original seller to receive any current HTTP 402 payment requirements; payment authorization and delivery remain with the actual x402 client and seller.</p>
+  <p><strong>Original-seller x402 transport for agents:</strong> <code>${h(offer.method)} ${h("https://shop.561.group"+relay)}</code> forwards one source-qualified offer request to the original Market and relays its 402 challenge or response. The authorization must name the <em>original Market resource</em>, not the Shop URL; the original Market still verifies payment, settles, and delivers. The Shop has no wallet, payment authority, or independently verified paid-delivery status. Do not blindly replay a signed call after a transport failure.</p>
   <p>${endpoint} · <a href="${h(offer.inspectUrl)}">Inspect original Bazaar listing</a></p></section>
   <section aria-labelledby="input"><h2 id="input">What this service accepts</h2><p>Method: <strong>${h(offer.method)}</strong>. The request's admitted fields are described by the source contract, not an invented checkout form.</p>
   ${properties.length ? `<div role="region" aria-label="Source-declared input fields" tabindex="0"><table><caption>Input fields (first ${properties.length})</caption><thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Required</th><th scope="col">Description</th></tr></thead><tbody>${fields}</tbody></table></div>` : "<p>The seller did not declare individually displayable input fields.</p>"}
@@ -287,6 +289,14 @@ export async function serviceOfferResponse(request, {fetchSource = fetch} = {}) 
     recordType:"561-group.shop.original-service-detail.v1",
     source:page.source, qualifications:page.qualifications,
     offer:found[0], sourceSearchCount:page.total,
+    originalSellerRelay: Object.freeze({
+      method:found[0].method,
+      url:"https://shop.561.group/services/execute?"+new URLSearchParams({sku}),
+      sellerResource:found[0].endpoint,
+      seller:page.source.market,
+      shopSignsOrSettles:false,
+      externalPaidDeliveryVerified:false,
+    }),
   });
   const json = url.pathname.endsWith(".json");
   const payload = json ? JSON.stringify(reading) : renderServiceOfferPage(reading);
