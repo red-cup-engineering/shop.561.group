@@ -142,8 +142,13 @@ export async function serviceMarketX402RelayResponse(request,{fetchSource=fetch}
     "cache-control":"no-store",
     "x-content-type-options":"nosniff",
     "referrer-policy":"no-referrer",
+    "content-security-policy":"default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox",
     "access-control-expose-headers":"payment-required, payment-response, x-payment-response",
   });
+  // Paid results may contain active HTML or SVG. Prevent execution in Shop's
+  // origin without discarding settled bytes or rewriting seller receipts.
+  if(received.status>=200 && received.status<300)
+    pass.set("content-disposition","attachment");
   for(const name of ["content-type","payment-required","payment-response","x-payment-response"]){
     const value=received.headers.get(name);
     if(value!==null) pass.set(name,value);
