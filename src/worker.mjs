@@ -5,6 +5,7 @@ const {createDigitalGoodsStorefrontWorker}=storefrontRuntime;
 import catalog from "./compiled-catalog.mjs";
 import { createShopFulfillmentBindings } from "./fulfillment.mjs";
 import { marketCatalogTransport, routeServiceDiscovery } from "./service-discovery.mjs";
+import { serviceMarketX402RelayResponse } from "./service-market-x402-relay.mjs";
 import { supportResponse } from "./support-campaign.mjs";
 import { bookAtomFeed } from "./book-feed.mjs";
 
@@ -53,6 +54,12 @@ export default {
         },
       });
     }
+    // Only the original Market is the x402 seller. Shop transports exact
+    // source-qualified buyer requests; it neither signs nor settles payment.
+    if (pathname === "/services/execute")
+      return serviceMarketX402RelayResponse(request, {
+        fetchSource: marketCatalogTransport(env?.MARKET_SERVICE_CATALOG_FETCH, fetch),
+      });
     const serviceRoute = routeServiceDiscovery(request, {
       fetchSource: marketCatalogTransport(env?.MARKET_SERVICE_CATALOG_FETCH, fetch),
     });
