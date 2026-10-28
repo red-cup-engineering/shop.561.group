@@ -10,13 +10,17 @@ const source = readFileSync(new URL("../wrangler.jsonc", import.meta.url), "utf8
 // This canonical Wrangler file uses standalone JSONC line comments only.
 const config = JSON.parse(source.replace(/^\s*\/\/[^\r\n]*$/gmu, ""));
 
-test("the original Shop /support buyer routes must reach its Worker before static assets", () => {
+test("the original Shop support and source-qualified x402 buyer routes reach Worker before assets", () => {
   assert.equal(config.name, "shop-561-group");
   assert.equal(config.main, "src/worker.mjs");
   assert.equal(config.workers_dev, false);
   assert.deepEqual(config.routes, [{pattern: "shop.561.group", custom_domain: true}]);
   assert.equal(config.assets.directory, "./public");
-  assert.deepEqual(config.assets.run_worker_first, ["/support", "/support/*"]);
+  assert.deepEqual(config.assets.run_worker_first, ["/support", "/support/*", "/services/execute"]);
+  const worker=readFileSync(new URL("../src/worker.mjs",import.meta.url),"utf8");
+  assert.ok(worker.includes('pathname === "/services/execute"'));
+  assert.ok(worker.includes("serviceMarketX402RelayResponse(request"));
+  assert.ok(worker.includes("marketCatalogTransport(env?.MARKET_SERVICE_CATALOG_FETCH, fetch)"));
 });
 
 test("book covers and unrelated assets retain assets-first delivery", () => {
@@ -40,6 +44,8 @@ test("direct Wrangler deploys require original source-qualified support and attr
     "scripts/probe-public-support.mjs",
     "src/support-checkout-attribution.mjs",
     "scripts/reconcile-support-checkouts.mjs",
+    "src/service-market-x402-relay.mjs",
+    "test/service-market-x402-relay.test.mjs",
   ]) {
     assert.ok(command.includes(originalGuard), `missing direct deploy guard: ${originalGuard}`);
   }
