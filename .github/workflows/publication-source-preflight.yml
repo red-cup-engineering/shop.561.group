@@ -42,6 +42,10 @@ jobs:
         run: |
           node --check src/service-discovery.mjs
           node --test test/service-discovery.test.mjs
+      - name: Qualify original Market x402 relay without signing, funds or private seller parameters
+        run: |
+          node --check src/service-market-x402-relay.mjs
+          node --test test/service-market-x402-relay.test.mjs
       - name: Qualify unsigned public buyer receiver against synthetic normal and refusal cases
         run: |
           node --check scripts/receive-public-shop.mjs
