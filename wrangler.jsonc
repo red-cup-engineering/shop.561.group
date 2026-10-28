@@ -4,7 +4,7 @@
   "main": "src/worker.mjs",
   // Fail a direct Wrangler build/deploy before bundling if Shop's public service
   // projection can leak fields from the upstream seller record.
-  "build": { "command": "node --check scripts/reconcile-authored-offer-links.mjs && node scripts/reconcile-authored-offer-links.mjs --check && node --check src/service-discovery.mjs && node --check src/book-feed.mjs && node --check src/external-stripe-payment-link-receiving.mjs && node --check src/worker.mjs && node --test test/reconcile-authored-offer-links.test.mjs test/compile-catalog.test.mjs test/book-feed.test.mjs test/service-discovery.test.mjs test/external-stripe-payment-link-receiving.test.mjs test/worker.test.mjs test/support-campaign.test.mjs test/shop-commerce-integration.test.mjs" },
+  "build": { "command": "node --check scripts/reconcile-authored-offer-links.mjs && node scripts/reconcile-authored-offer-links.mjs --check && node --check src/service-discovery.mjs && node --check src/book-feed.mjs && node --check src/external-stripe-payment-link-receiving.mjs && node --check src/worker.mjs && node --check src/support-public-probe.mjs && node --check scripts/probe-public-support.mjs && node --check src/support-checkout-attribution.mjs && node --check scripts/reconcile-support-checkouts.mjs && node --test test/support-worker-routing.test.mjs test/support-public-probe.test.mjs test/support-checkout-attribution.test.mjs test/reconcile-authored-offer-links.test.mjs test/compile-catalog.test.mjs test/book-feed.test.mjs test/service-discovery.test.mjs test/external-stripe-payment-link-receiving.test.mjs test/fulfillment-bindings.test.mjs test/worker.test.mjs test/support-campaign.test.mjs test/shop-commerce-integration.test.mjs test/receive-public-shop.test.mjs" },
   "compatibility_date": "2026-09-02",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
@@ -13,7 +13,10 @@
   ],
   "preview_urls": false,
   // Book covers, copied from each edition by scripts/compile-catalog.mjs.
-  "assets": { "directory": "./public" },
+  "assets": {
+    "directory": "./public",
+    "run_worker_first": ["/support", "/support/*"]
+  },
   "routes": [
     {
       "pattern": "shop.561.group",
