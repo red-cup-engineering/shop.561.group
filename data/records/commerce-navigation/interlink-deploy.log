@@ -1,0 +1,21 @@
+Cloudflare: issued scoped token fd1c0b51bcab129af4f6683a1ba15338, expires 2026-10-21T05:50:09Z
+
+ ⛅️ wrangler 4.127.1 (update available 4.151.3)
+───────────────────────────────────────────────
+🌀 Building list of assets...
+✨ Read 11 files from the assets directory /home/emsenn/info/lib/emsenn/services/561-group/services/public-services-section/services/public-resources-services-section/services/public-consumer-resources-services-section/sites/shop.561.group/data/logs/commerce-interlink-qualified-20261020/public
+🌀 Starting asset upload...
+No updated asset files to upload. Proceeding with deployment...
+Total Upload: 612.60 KiB / gzip: 146.05 KiB
+Worker Startup Time: 18 ms
+Your Worker has access to the following bindings:
+Binding                                                       Resource            
+env.SHOP_FULFILLMENT (ShopFulfillment)                        Durable Object      
+env.SHOP_ENTITLEMENTS (9372634aa5ca4c87937c6d3dd457bef6)      KV Namespace        
+env.SHOP_GOODS (shop-561-group-goods)                         R2 Bucket           
+
+Uploaded shop-561-group (4.75 sec)
+Deployed shop-561-group triggers (1.76 sec)
+  shop.561.group (custom domain)
+Current Version ID: e06b55fd-610d-4dcd-83ea-e65835deae82
+Cloudflare: revoked token fd1c0b51bcab129af4f6683a1ba15338

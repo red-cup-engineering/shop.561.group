@@ -1,0 +1,305 @@
+{
+  "type": "ShopCommerceNavigationProviderReceiving",
+  "at": "2026-10-21T04:50:59.656Z",
+  "sourceHead": "217bd632487347de1ca41e1fc034d4aebf7fa4f2",
+  "sourceMerge": "94c67532f61567e98ae69a86962c93637ac9355a",
+  "deployments": {
+    "deployments": [
+      {
+        "id": "4a649b90-8610-4f8d-83b3-c20e5e1c85af",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/triggered_by": "deployment"
+        },
+        "versions": [
+          {
+            "version_id": "e06b55fd-610d-4dcd-83ea-e65835deae82",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-21T04:50:17.834089Z"
+      },
+      {
+        "id": "3e79bfc2-0000-417e-98c9-381327ca2b4f",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "deployment"
+        },
+        "versions": [
+          {
+            "version_id": "cce50f32-6447-40e9-93f5-11e4c9e30297",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-09T16:20:10.122208Z"
+      },
+      {
+        "id": "cef82144-302a-48d5-b59e-f17d62cc4c7e",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "deployment"
+        },
+        "versions": [
+          {
+            "version_id": "5bb54e40-f6ad-40af-bc9c-242f02a0a693",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-03T05:10:20.723575Z"
+      },
+      {
+        "id": "bd86b268-c91b-4f1e-afe5-11942a7482c4",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "deployment"
+        },
+        "versions": [
+          {
+            "version_id": "5bdd3377-a7c6-4449-aeb1-487a92aba50d",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-02T18:13:04.550686Z"
+      },
+      {
+        "id": "d5bd867f-c2d5-4f52-ac17-d4aaae93bf1f",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "secret"
+        },
+        "versions": [
+          {
+            "version_id": "340e3812-0c65-4ca2-b974-559208e76f84",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-02T17:55:34.200712Z"
+      },
+      {
+        "id": "bfba33d8-d201-4077-8781-a4fe73533887",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "deployment"
+        },
+        "versions": [
+          {
+            "version_id": "5c5826c7-b6a4-427c-a4cd-a047f386d015",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-02T17:55:24.63813Z"
+      },
+      {
+        "id": "603cac49-4bca-40a1-b423-202d3d895ed6",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "secret"
+        },
+        "versions": [
+          {
+            "version_id": "a39f84e9-458f-469d-8b1f-b0a9dc9828e2",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-01T16:53:55.434801Z"
+      },
+      {
+        "id": "e10215d4-f26a-4eb0-baf3-616b2803cacd",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "secret"
+        },
+        "versions": [
+          {
+            "version_id": "599d60bc-179d-4bae-acc4-78c5fab149fc",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-01T16:53:39.767789Z"
+      },
+      {
+        "id": "402d75a0-2964-4cd2-ad6a-721f47fc84c5",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "secret"
+        },
+        "versions": [
+          {
+            "version_id": "7af16f55-6801-4d58-af49-6163448114b0",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-10-01T16:52:04.662297Z"
+      },
+      {
+        "id": "89effc08-3b0b-41ca-ae4b-1352c09063f8",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "author_email": "morgan.sennhauser@gmail.com",
+        "annotations": {
+          "workers/triggered_by": "deployment"
+        },
+        "versions": [
+          {
+            "version_id": "100c3f55-f75c-4442-aabc-0bb6dbd138dc",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-29T23:19:41.614359Z"
+      }
+    ]
+  },
+  "version": {
+    "id": "e06b55fd-610d-4dcd-83ea-e65835deae82",
+    "number": 37,
+    "metadata": {
+      "created_on": "2026-10-21T04:50:17.282289Z",
+      "source": "wrangler",
+      "author_id": "fd1c0b51bcab129af4f6683a1ba15338",
+      "author_email": "",
+      "has_preview": false
+    },
+    "annotations": {
+      "workers/triggered_by": "version_upload"
+    },
+    "resources": {
+      "script": {
+        "etag": "32b6996a1337028b30056cb2192b5ddd8cc7dcf3278c96b99d36cea19a39da90",
+        "handlers": [
+          "fetch"
+        ],
+        "named_handlers": [
+          {
+            "name": "CATALOG",
+            "handlers": [
+              "merchant",
+              "offerings"
+            ]
+          },
+          {
+            "name": "CATALOG_VALIDATION",
+            "handlers": [
+              "valid",
+              "errors"
+            ]
+          },
+          {
+            "name": "ShopFulfillment",
+            "handlers": [
+              "class"
+            ]
+          }
+        ],
+        "last_deployed_from": "wrangler"
+      },
+      "script_runtime": {
+        "migration_tag": "v1",
+        "assets": {
+          "serve_directly": true,
+          "raw_run_worker_first": false,
+          "base_path": "/"
+        },
+        "compatibility_date": "2026-09-02",
+        "compatibility_flags": [
+          "nodejs_compat"
+        ],
+        "usage_model": "standard"
+      },
+      "bindings": [
+        {
+          "name": "GOOGLE_CLIENT_ID",
+          "type": "secret_text"
+        },
+        {
+          "name": "GOOGLE_CLIENT_SECRET",
+          "type": "secret_text"
+        },
+        {
+          "name": "SHOP_ENTITLEMENTS",
+          "namespace_id": "9372634aa5ca4c87937c6d3dd457bef6",
+          "type": "kv_namespace"
+        },
+        {
+          "class_name": "ShopFulfillment",
+          "name": "SHOP_FULFILLMENT",
+          "namespace_id": "a660c016642c49e19e7aca54a70679bb",
+          "type": "durable_object_namespace"
+        },
+        {
+          "name": "SHOP_GIFT_AGENT_KEY",
+          "type": "secret_text"
+        },
+        {
+          "name": "SHOP_GIFTERS",
+          "type": "secret_text"
+        },
+        {
+          "bucket_name": "shop-561-group-goods",
+          "name": "SHOP_GOODS",
+          "type": "r2_bucket"
+        },
+        {
+          "name": "SHOP_SESSION_SECRET",
+          "type": "secret_text"
+        },
+        {
+          "name": "SHOP_TOKEN_SECRET",
+          "type": "secret_text"
+        },
+        {
+          "name": "STRIPE_CUSTOMER_CONTRACT_TOKEN",
+          "type": "secret_text"
+        },
+        {
+          "name": "STRIPE_SECRET_KEY",
+          "type": "secret_text"
+        },
+        {
+          "name": "STRIPE_WEBHOOK_SECRET",
+          "type": "secret_text"
+        }
+      ]
+    }
+  },
+  "domains": [
+    {
+      "id": "31ecf88d12158b9b9cde882b811209ae7d8bef7a",
+      "zone_id": "179300009777a1a35c04494c503b7ebd",
+      "zone_name": "561.group",
+      "hostname": "shop.561.group",
+      "service": "shop-561-group",
+      "environment": "production",
+      "cert_id": "b8a1a17d-2e5b-42a8-aba0-d811a853031f",
+      "previews_enabled": false,
+      "enabled": true
+    }
+  ],
+  "uploadedParts": [
+    {
+      "key": "worker.mjs",
+      "name": "worker.mjs",
+      "kind": "file",
+      "bytes": 627303,
+      "sha256": "6b0505887b541710f2d2bde0a0dde6dac8cccb374e3130a0bee592c554338e3b"
+    }
+  ],
+  "exactQualifiedBundle": true,
+  "bindingsUnchanged": true
+}
