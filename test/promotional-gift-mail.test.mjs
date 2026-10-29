@@ -3,14 +3,18 @@ import test from "node:test";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { prepareJob, runJob, sendFastmail } from "../scripts/promotional-gift-mail.mjs";
+import { spawnSync } from "node:child_process";
+import { prepareJob, runJob, sendFastmail, deliverGiftNotice, confirmedGiftNotice } from "../scripts/promotional-gift-mail.mjs";
+import { grantReference } from "../src/promotion-email-gifts.mjs";
+const GIFT_ID = "gift-12345678-1234-1234-1234-123456789abc";
+const GIFT_URL = "https://shop.561.group/gifts/gift-12345678-1234-1234-1234-123456789abc";
 
 test("one accepted send grants and receipts, repeated run does not send twice", async () => {
   const dir = await mkdtemp(join(tmpdir(), "shop-promo-")); const file = join(dir, "job.json");
   await prepareJob(file, { from: "press@example.org", to: "reader@example.org", offering: "ice-out", subject: "An advance copy", body: "Here is the book." });
   let sends = 0, grants = 0;
   const send = async job => { sends++; return { accepted: true, status: "sent", provider: "fastmail-jmap", messageId: "sub123", to: [job.to] }; };
-  const grant = { shopGrant: async () => { grants++; return { id: "g1" }; }, shopRead: async () => ({ offering: "ice-out", email: "reader@example.org", status: "active" }) };
+  const grant = { shopGrant: async () => { grants++; return { id: GIFT_ID, offering: "ice-out", url: GIFT_URL }; }, shopRead: async () => ({ id: GIFT_ID, offering: "ice-out", status: "active" }) };
   const old = process.env.SHOP_GIFT_AGENT_KEY, oldMail = process.env.FASTMAIL_JMAP_TOKEN;
   try {
     process.env.SHOP_GIFT_AGENT_KEY = "test"; process.env.FASTMAIL_JMAP_TOKEN = "test";
@@ -27,7 +31,7 @@ test("send accepted then grant failure retries grant without another send", asyn
   try {
     process.env.SHOP_GIFT_AGENT_KEY = "test"; process.env.FASTMAIL_JMAP_TOKEN = "test";
     const send = async job => { sends++; return { accepted: true, status: "sent", provider: "fastmail-jmap", messageId: "submission2", to: [job.to] }; };
-    const grant = { shopGrant: async () => { if (++grants === 1) throw new Error("network failed"); return { id: "g1" }; }, shopRead: async () => ({ offering: "ice-out", email: "reader@example.org", status: "active" }) };
+    const grant = { shopGrant: async () => { if (++grants === 1) throw new Error("network failed"); return { id: GIFT_ID, offering: "ice-out", url: GIFT_URL }; }, shopRead: async () => ({ id: GIFT_ID, offering: "ice-out", status: "active" }) };
     await assert.rejects(runJob(file, { send, grant }), /network failed/);
     assert.equal(JSON.parse(await readFile(file, "utf8")).state, "grant-failed");
     assert.equal((await runJob(file, { send, grant })).state, "grant-verified");
@@ -119,4 +123,125 @@ test("historical grant-readback records do not falsely claim reader receipt or r
   const outcome = await runJob(file, { send: async () => { throw new Error("should not resend"); } });
   assert.equal(outcome.state, "grant-verified");
   assert.equal(JSON.parse(await readFile(file, "utf8")).state, "grant-verified");
+});
+
+/** The original first send and its ID-bound shop grant are separately held.
+ * No fake recipient receipt or real mail-provider access in these fixtures.
+ */
+async function noticeFixture() {
+  const dir = await mkdtemp(join(tmpdir(), "shop-gift-notice-"));
+  const file = join(dir, "job.json");
+  const prepared = await prepareJob(file, {
+    from: "press@example.org", to: "reader@example.org", offering: "ice-out",
+    subject: "Book offer", body: "A gift link will follow after confirmation.",
+  });
+  const receipt = {
+    accepted: true, status: "sent", provider: "fastmail-jmap",
+    messageId: "original-submission", to: [prepared.to],
+  };
+  const id = GIFT_ID;
+  const gift = {
+    verified: true, id, url: `https://shop.561.group/gifts/${id}`,
+    reference: grantReference({ provider: receipt.provider, messageId: receipt.messageId,
+      offering: prepared.offering, recipient: prepared.to }),
+  };
+  const record = { ...prepared, state: "grant-verified", receipt, gift };
+  await writeFile(file, JSON.stringify(record));
+  return { file, record };
+}
+async function withNoticeToken(action) {
+  const previous = process.env.FASTMAIL_JMAP_TOKEN;
+  process.env.FASTMAIL_JMAP_TOKEN = "test-only";
+  try { return await action(); }
+  finally {
+    if (previous === undefined) delete process.env.FASTMAIL_JMAP_TOKEN;
+    else process.env.FASTMAIL_JMAP_TOKEN = previous;
+  }
+}
+const validGrant = { shopRead: async id => ({ id, offering: "ice-out", status: "active" }) };
+
+test("confirmed original grant sends one explicitly requested private notice, not a false receipt", async () =>
+  withNoticeToken(async () => {
+    const { file, record } = await noticeFixture();
+    const notice = confirmedGiftNotice(record);
+    assert.equal(notice.to, record.to);
+    assert.ok(notice.body.includes(GIFT_URL));
+    let sends = 0, reads = 0;
+    const grant = { shopRead: async id => { reads++; return validGrant.shopRead(id); } };
+    const send = async job => {
+      sends++; assert.equal(job.to, record.to);
+      return { accepted: true, status: "sent", provider: "fastmail-jmap", messageId: "notice-1", to: [job.to] };
+    };
+    const first = await deliverGiftNotice(file, { send, grant });
+    const second = await deliverGiftNotice(file, { send, grant });
+    assert.equal(first.state, "notice-accepted");
+    assert.equal(second.state, "notice-accepted");
+    assert.equal(first.noticeReceipt.messageId, "notice-1");
+    assert.equal(first.recipientReceived, undefined);
+    assert.equal(sends, 1); assert.equal(reads, 1);
+    assert.equal((await runJob(file, { send: async () => { throw Error("must not resend"); } })).state, "notice-accepted");
+  }));
+
+test("ambiguous notice submission is held for reconciliation, not replayed", async () =>
+  withNoticeToken(async () => {
+    const { file } = await noticeFixture();
+    let sends = 0;
+    await assert.rejects(deliverGiftNotice(file, {
+      grant: validGrant, send: async () => { sends++; throw Error("reply lost after send"); },
+    }), /reply lost/u);
+    assert.equal(JSON.parse(await readFile(file, "utf8")).state, "notice-uncertain");
+    await assert.rejects(deliverGiftNotice(file, {
+      grant: validGrant, send: async () => { sends++; throw Error("unapproved resend"); },
+    }), /grant verification required/u);
+    assert.equal(sends, 1);
+  }));
+
+test("revoked or changing grants and forged private links send no notice", async () =>
+  withNoticeToken(async () => {
+    const { file, record } = await noticeFixture();
+    let sends = 0;
+    const send = async () => { sends++; return {}; };
+    await assert.rejects(deliverGiftNotice(file, {
+      send, grant: { shopRead: async id => ({ id, offering: "ice-out", status: "revoked" }) },
+    }), /absent, changed, or revoked/u);
+    assert.equal(JSON.parse(await readFile(file, "utf8")).state, "grant-verified");
+    for (const patch of [
+      { gift: { ...record.gift, url: "https://evil.invalid/gifts/gift-test_1" } },
+      { gift: { ...record.gift, reference: "forged" } },
+      { gift: { ...record.gift, verified: false } },
+      { receipt: { ...record.receipt, status: "draft" } },
+      { state: "send-uncertain" },
+    ]) {
+      await writeFile(file, JSON.stringify({ ...record, ...patch }));
+      await assert.rejects(deliverGiftNotice(file, { send, grant: validGrant }));
+    }
+    assert.equal(sends, 0);
+  }));
+
+test("a mismatched Fastmail notice receipt cannot become accepted delivery", async () =>
+  withNoticeToken(async () => {
+    const { file } = await noticeFixture();
+    await assert.rejects(deliverGiftNotice(file, {
+      grant: validGrant,
+      send: async job => ({ accepted: true, status: "sent", provider: "fastmail-jmap",
+        messageId: "n2", to: ["other@example.org"] }),
+    }), /matching Fastmail receipt/u);
+    const record = JSON.parse(await readFile(file, "utf8"));
+    assert.equal(record.state, "notice-uncertain");
+    assert.equal(record.noticeReceipt, undefined);
+  }));
+
+test("operator command keeps gift bearer ID and URL out of generic process output", async () => {
+  const { file, record } = await noticeFixture();
+  const child = spawnSync(process.execPath,
+    ["scripts/promotional-gift-mail.mjs", "run", file],
+    { cwd: process.cwd(), encoding: "utf8", timeout: 10000 });
+  assert.equal(child.status, 0, child.stderr);
+  const result = JSON.parse(child.stdout);
+  assert.equal(result.state, "grant-verified");
+  assert.equal(result.recipientReceived, false);
+  assert.equal(result.giftId, undefined);
+  assert.equal(result.giftUrl, undefined);
+  assert.ok(!child.stdout.includes(record.gift.id));
+  assert.ok(!child.stdout.includes(record.gift.url));
 });

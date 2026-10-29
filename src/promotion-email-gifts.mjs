@@ -30,12 +30,23 @@ export async function fulfillPromotionalSend({ receipt, offering, recipient, sho
   if (typeof shopGrant !== "function" || typeof shopRead !== "function") throw new Error("authenticated shop adapters required");
   const reference = grantReference({ provider: receipt.provider, messageId: receipt.messageId, offering, recipient: to });
   const grant = await shopGrant({ offering: required(offering, "offering"), email: to, reference });
-  if (!grant || typeof grant.id !== "string" || !grant.id) throw new Error("shop did not acknowledge a gift id");
+  // Validate what the original authenticated Shop POST actually acknowledges,
+  // including its original bearer link, before reading back the new grant.
+  if (!grant || typeof grant.id !== "string"
+      || !/^gift-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(grant.id)
+      || grant.offering !== offering || grant.url !== `https://shop.561.group/gifts/${grant.id}`) {
+    throw new Error("shop grant identity, offering or canonical URL mismatch");
+  }
   const verified = await shopRead(grant.id);
   if (!verified || typeof verified !== "object") throw new Error("gift readback missing");
   const record = verified.gift ?? verified;
-  if (record.offering !== offering || email(record.email) !== to || (record.status && !["active", "issued", "available"].includes(record.status))) {
-    throw new Error("gift readback does not match intended recipient and offering");
+  // The real GET /api/gifts/:id deliberately omits the recipient email.
+  // Recipient binding comes from the scoped, idempotent POST and the provider's
+  // refusal to reassign its reference, not an invented email in a GET reply.
+  // This is evidence of an active gift, never recipient access or delivery.
+  if (record.id !== grant.id || record.offering !== offering || record.status !== "active"
+      || (record.email !== undefined && email(record.email) !== to)) {
+    throw new Error("shop gift readback identity or active state mismatch");
   }
   return { reference, id: grant.id, url: grant.url, disposition: grant.disposition, verified: true };
 }

@@ -138,3 +138,37 @@ jobs:
           fi
           ./node_modules/.bin/wrangler deploy --dry-run --outdir "$RUNNER_TEMP/shop-worker-bundle"
           echo 'SOURCE + DEPENDENCY + DRY BUNDLE ONLY; NOT installed buyer/checkout acceptance' >> "$GITHUB_STEP_SUMMARY"
+
+  # Source-only entry remains runnable without the separately restricted
+  # private Causeway parameters Gitlink. The original full contract job above
+  # still requires its approved private source credential; do not treat this
+  # independent limited test as full Shop release or customer receiving.
+  gift-notice-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Qualify exact original grant, safe notice and replay refusal
+        run: |
+          node --check src/promotion-email-gifts.mjs
+          node --check scripts/promotional-gift-mail.mjs
+          node --test test/promotion-email-gifts.test.mjs test/promotional-gift-mail.test.mjs
+      # All selected cases use tracked files or isolated temp fixtures. Unlike
+      # the full contract, these tests do not import the private parameters
+      # Gitlink; keep the original full private-source gate intact.
+      - name: Receive independent publication, service and feed contracts
+        run: |
+          node --check src/service-discovery.mjs
+          node --check src/book-feed.mjs
+          node --check scripts/audit-publication-source.mjs
+          node --check scripts/edition-illustration-provenance.mjs
+          node --test test/publication-source-preflight.test.mjs test/service-discovery.test.mjs test/book-feed.test.mjs test/compile-catalog.test.mjs

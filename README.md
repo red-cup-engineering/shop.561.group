@@ -117,6 +117,35 @@ bindings and the `ShopFulfillment` Durable Object registration.
   withdrawn.
 - A gift API for the house's agents, with the gift-agent key; every such
   gift is recorded as given by `press@561.group`.
+
+### Promotional book gift receiving (source candidate, not installed)
+
+The existing Shop operator source `scripts/promotional-gift-mail.mjs` has three
+separate **explicit** commands: `prepare JOB.json SPEC.json` records one private
+0600 one-recipient job, `run JOB.json` submits the approved **initial**
+Fastmail message and receives an idempotent Shop grant, and `deliver JOB.json`
+submits a **second** email carrying the confirmed private gift link only after
+a fresh authenticated Shop gift readback. The first message must not claim the
+gift already exists. This is original [Causeway Public Services #53](https://github.com/causeway-services/public-services-section/issues/53),
+not an independent mailer or entitlement store.
+
+Use an already authorized operator, the selected `FASTMAIL_JMAP_TOKEN` and
+`SHOP_GIFT_AGENT_KEY` in private custody. No credentials belong in JSON specs,
+issue comments, PRs, shell history or logs. The job file contains the recipient
+and bearer grant link: protect it as private customer data and do not print,
+publish or send it to anyone other than the intended recipient. `run` and
+`deliver` print **only coarse state**, never a gift ID or link. A job halted at
+`send-uncertain` or `notice-uncertain` may already have sent mail and **must
+not be retried** until the original Fastmail provider receipt is reconciled.
+A failed grant can be retried idempotently under its original stable reference
+without resending the first mail. A revoked/changed grant refuses the second.
+
+`notice-accepted` means Fastmail acknowledged submission, **not** that the
+recipient opened the link, signed in, reached their library or downloaded the
+correct edition. Real completion still requires distinct authorized provider
+and recipient receipts, accepted edition digest, and independent Causeway
+receiving. No live customer, campaign or entitlement is created by this source
+review or its isolated native tests.
 - Review copies. A review copy is not a gift of the retail release: it is
   the advance-reader rendition stamped for one reader, staged under its
   grant at `goods/<offering>/review-copies/<grant>/` in
