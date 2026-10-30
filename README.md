@@ -328,5 +328,5 @@ The focused, dependency-free public GitHub Actions suite now enrolls original di
 This repository is Red Cup Engineering's deployable application for shop.561.group (transferred 2026-10-24 from `causeway-services`; history, redirects and public visibility preserved). The content the Shop publishes is data and lives in `causeway-services/public-shop-services-section`: `catalog.json`, `data/records/**` and `ops/*.md`. It is bound here as the `parameters/` git submodule, and `package.json` `imports` maps `#parameters/*` to `./parameters/*`, so the import path is the parameter: scripts read `parameters/catalog.json`, source and tests import `#parameters/...`, and the Worker bundle includes the bound records exactly as before.
 
 - Clone with `git clone --recurse-submodules`, or run `git submodule update --init` (the section is private).
-- To change the catalog, change `public-shop-services-section`, then advance the submodule pin here; `npm run compile` regenerates `src/compiled-catalog.mjs` from it.
+- To change the catalog, change `public-business-shop-services-section`, then advance the submodule pin here; `npm run compile` regenerates `src/compiled-catalog.mjs` from it.
 - The `publication-source-preflight` workflow checks the submodule out with the `PARAMETERS_READ_TOKEN` secret (read-only on the section); without it CI cannot read the private section.
